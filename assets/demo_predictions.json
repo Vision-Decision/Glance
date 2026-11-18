@@ -1,0 +1,322 @@
+{
+ "model": "aac6fef/Glance-4B-preview (same files, loaded from a local copy)",
+ "device": "mps",
+ "dtype": "torch.float32",
+ "scenes": [
+  {
+   "name": "natural",
+   "local_ms": 1960.2,
+   "results": [
+    {
+     "text": "the woman sitting on the bench",
+     "present_prob": 0.9997,
+     "box": [
+      142.5,
+      143.5,
+      282.5,
+      452.9
+     ],
+     "iou_prob": 0.9951,
+     "confidence": 0.9948,
+     "present": true,
+     "kind": "box"
+    },
+    {
+     "text": "the man in the blue suit",
+     "present_prob": 0.9991,
+     "box": [
+      292.9,
+      112.0,
+      487.7,
+      437.4
+     ],
+     "iou_prob": 0.9963,
+     "confidence": 0.9955,
+     "present": true,
+     "kind": "box"
+    },
+    {
+     "text": "the clear umbrella",
+     "present_prob": 0.996,
+     "box": [
+      189.2,
+      9.3,
+      373.6,
+      164.8
+     ],
+     "iou_prob": 0.8266,
+     "confidence": 0.8233,
+     "present": true,
+     "kind": "box"
+    },
+    {
+     "text": "a dog",
+     "present_prob": 0.0002,
+     "box": [
+      253.6,
+      153.8,
+      406.9,
+      387.5
+     ],
+     "iou_prob": 0.4058,
+     "confidence": 0.0001,
+     "present": false,
+     "kind": "box"
+    },
+    {
+     "text": "a red bicycle",
+     "present_prob": 0.0,
+     "box": [
+      4.6,
+      171.3,
+      236.2,
+      362.9
+     ],
+     "iou_prob": 0.2246,
+     "confidence": 0.0,
+     "present": false,
+     "kind": "box"
+    },
+    {
+     "question": "Is it raining?",
+     "p_yes": 0.0325,
+     "answer": false,
+     "kind": "yesno"
+    }
+   ]
+  },
+  {
+   "name": "gui",
+   "local_ms": 2146.8,
+   "results": [
+    {
+     "question": "Is a save dialog open?",
+     "p_yes": 0.9922,
+     "answer": true,
+     "kind": "yesno"
+    },
+    {
+     "question": "Task: export the photo as a PNG file. What is the next action?",
+     "probs": {
+      "click": 0.7894,
+      "type": 0.0465,
+      "scroll": 0.0183,
+      "done": 0.1458
+     },
+     "answer": "click",
+     "kind": "choice"
+    },
+    {
+     "text": "the Export button",
+     "present_prob": 0.9064,
+     "box": [
+      196.6,
+      90.2,
+      246.0,
+      115.4
+     ],
+     "iou_prob": 0.9408,
+     "confidence": 0.8528,
+     "present": true,
+     "kind": "box"
+    },
+    {
+     "text": "the Save button in the dialog",
+     "present_prob": 0.9965,
+     "box": [
+      796.0,
+      361.5,
+      854.4,
+      393.0
+     ],
+     "iou_prob": 0.9234,
+     "confidence": 0.9201,
+     "present": true,
+     "kind": "box"
+    },
+    {
+     "question": "How risky would it be to click 'Delete all' now?",
+     "probs": {
+      "low": 0.2715,
+      "medium": 0.2768,
+      "high": 0.2836,
+      "critical": 0.1681
+     },
+     "answer": "high",
+     "expected": 1.348,
+     "kind": "score"
+    }
+   ]
+  },
+  {
+   "name": "text",
+   "local_ms": 788.8,
+   "results": [
+    {
+     "question": "Which team should handle this ticket?",
+     "probs": {
+      "billing": 0.9994,
+      "technical": 0.0002,
+      "sales": 0.0002,
+      "account": 0.0002
+     },
+     "answer": "billing",
+     "kind": "choice"
+    },
+    {
+     "question": "Does the customer ask for money back?",
+     "p_yes": 0.9929,
+     "answer": true,
+     "kind": "yesno"
+    },
+    {
+     "question": "How urgent is this ticket?",
+     "probs": {
+      "low": 0.0223,
+      "medium": 0.1798,
+      "high": 0.4836,
+      "critical": 0.3143
+     },
+     "answer": "high",
+     "expected": 2.09,
+     "kind": "score"
+    },
+    {
+     "question": "What is the customer's sentiment?",
+     "probs": {
+      "positive": 0.0094,
+      "neutral": 0.158,
+      "frustrated": 0.5494,
+      "angry": 0.2832
+     },
+     "answer": "frustrated",
+     "kind": "choice"
+    }
+   ]
+  }
+ ],
+ "scenes_spec": [
+  {
+   "name": "natural",
+   "title": "Referring expressions, incl. things that are not there",
+   "image": "park_bench.jpg",
+   "max_vis_tokens": 640,
+   "show_gpu_ms": true,
+   "questions": [
+    {
+     "type": "box",
+     "text": "the woman sitting on the bench"
+    },
+    {
+     "type": "box",
+     "text": "the man in the blue suit"
+    },
+    {
+     "type": "box",
+     "text": "the clear umbrella"
+    },
+    {
+     "type": "box",
+     "text": "a dog"
+    },
+    {
+     "type": "box",
+     "text": "a red bicycle"
+    },
+    {
+     "type": "yesno",
+     "question": "Is it raining?"
+    }
+   ]
+  },
+  {
+   "name": "gui",
+   "title": "GUI state check, next action, target, risk",
+   "image": "editor.png",
+   "max_vis_tokens": 640,
+   "show_gpu_ms": false,
+   "questions": [
+    {
+     "type": "yesno",
+     "question": "Is a save dialog open?"
+    },
+    {
+     "type": "choice",
+     "question": "Task: export the photo as a PNG file. What is the next action?",
+     "options": [
+      "click",
+      "type",
+      "scroll",
+      "done"
+     ],
+     "label": "Next action (task: export as PNG)"
+    },
+    {
+     "type": "box",
+     "text": "the Export button"
+    },
+    {
+     "type": "box",
+     "text": "the Save button in the dialog"
+    },
+    {
+     "type": "score",
+     "question": "How risky would it be to click 'Delete all' now?",
+     "levels": [
+      "low",
+      "medium",
+      "high",
+      "critical"
+     ],
+     "label": "Risk of clicking 'Delete all'"
+    }
+   ]
+  },
+  {
+   "name": "text",
+   "title": "Text-only typed decisions (ticket routing)",
+   "text": "Support ticket #4471\n\nI was charged twice for my March invoice and the second payment is still pending on my card. Please refund the duplicate charge before Friday, otherwise my account goes overdrawn.",
+   "show_gpu_ms": false,
+   "questions": [
+    {
+     "type": "choice",
+     "question": "Which team should handle this ticket?",
+     "options": {
+      "billing": "payments, invoices, refunds",
+      "technical": "bugs, errors, outages",
+      "sales": "pricing, upgrades, new plans",
+      "account": "login, profile, security"
+     },
+     "label": "Route to team"
+    },
+    {
+     "type": "yesno",
+     "question": "Does the customer ask for money back?"
+    },
+    {
+     "type": "score",
+     "question": "How urgent is this ticket?",
+     "levels": [
+      "low",
+      "medium",
+      "high",
+      "critical"
+     ],
+     "label": "Urgency"
+    },
+    {
+     "type": "choice",
+     "question": "What is the customer's sentiment?",
+     "options": [
+      "positive",
+      "neutral",
+      "frustrated",
+      "angry"
+     ],
+     "label": "Sentiment"
+    }
+   ]
+  }
+ ],
+ "note": "Raw outputs of Glance.ask() used to render assets/demo.gif; local_ms is wall time on the machine that rendered it (Apple M3 Max, MPS, fp32), not the RTX PRO 6000 figure shown in the GIF."
+}

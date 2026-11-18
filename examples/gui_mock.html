@@ -1,0 +1,61 @@
+<!doctype html>
+<!-- A made-up photo editor UI used only as a demo screenshot (rendered by examples/make_demo.py). -->
+<html><head><meta charset="utf-8"><style>
+  * { box-sizing: border-box; }
+  body { margin: 0; width: 1280px; height: 800px; font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+         background: #d9dce1; }
+  .win { position: absolute; inset: 0; background: #f4f5f7; display: flex; flex-direction: column; }
+  .title { height: 38px; background: #e6e8ec; border-bottom: 1px solid #c9ccd2; display: flex; align-items: center;
+           padding: 0 14px; font-size: 15px; color: #333; }
+  .dots span { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 7px; }
+  .title .name { flex: 1; text-align: center; margin-right: 60px; }
+  .menu { height: 32px; display: flex; gap: 22px; align-items: center; padding: 0 16px; font-size: 15px; color: #333;
+          border-bottom: 1px solid #d6d9de; background: #fafbfc; }
+  .tools { height: 62px; display: flex; gap: 10px; align-items: center; padding: 0 16px; border-bottom: 1px solid #d6d9de; }
+  .btn { height: 40px; padding: 0 18px; border-radius: 8px; border: 1px solid #c3c7ce; background: #fff;
+         font-size: 16px; display: flex; align-items: center; color: #222; }
+  .btn.primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+  .btn.danger { color: #b91c1c; border-color: #f0b4b4; }
+  .sep { width: 1px; height: 32px; background: #d0d3d9; margin: 0 6px; }
+  .main { flex: 1; display: flex; }
+  .side { width: 230px; border-right: 1px solid #d6d9de; padding: 16px; font-size: 15px; color: #444; background: #fafbfc; }
+  .side h4 { margin: 4px 0 12px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: #888; }
+  .side div { padding: 8px 10px; border-radius: 6px; margin-bottom: 4px; }
+  .side .on { background: #e2e8f5; }
+  .canvas { flex: 1; display: flex; align-items: center; justify-content: center; }
+  .photo { width: 640px; height: 420px; border-radius: 4px;
+           background: linear-gradient(180deg, #8ec5fc 0%, #e0c3fc 55%, #f9d29d 56%, #f6a96b 100%);
+           box-shadow: 0 6px 22px rgba(0,0,0,.18); position: relative; }
+  .sun { position: absolute; left: 400px; top: 150px; width: 90px; height: 90px; border-radius: 50%; background: #fff3b0; }
+  .status { height: 30px; border-top: 1px solid #d6d9de; font-size: 13px; color: #666; display: flex; align-items: center;
+            padding: 0 16px; gap: 24px; background: #fafbfc; }
+  .shade { position: absolute; inset: 0; background: rgba(20, 24, 33, .35); }
+  .dialog { position: absolute; left: 400px; top: 250px; width: 480px; background: #fff; border-radius: 12px;
+            box-shadow: 0 18px 50px rgba(0,0,0,.35); padding: 26px 28px 22px; }
+  .dialog h3 { margin: 0 0 10px; font-size: 20px; color: #111; }
+  .dialog p { margin: 0 0 24px; font-size: 16px; color: #444; line-height: 1.45; }
+  .dialog .row { display: flex; gap: 10px; justify-content: flex-end; }
+</style></head><body>
+<div class="win">
+  <div class="title"><span class="dots"><span style="background:#ff5f57"></span><span style="background:#febc2e"></span><span style="background:#28c840"></span></span>
+    <span class="name">sunset_beach.raw — Photo Editor</span></div>
+  <div class="menu"><span>File</span><span>Edit</span><span>Image</span><span>Layer</span><span>View</span><span>Help</span></div>
+  <div class="tools">
+    <div class="btn">Open</div><div class="btn">Save</div><div class="btn">Export</div>
+    <div class="sep"></div><div class="btn">Undo</div><div class="btn">Redo</div><div class="btn">Crop</div><div class="btn">Rotate</div>
+    <div class="sep"></div><div class="btn danger">Delete all</div>
+  </div>
+  <div class="main">
+    <div class="side"><h4>Adjust</h4><div class="on">Exposure</div><div>Contrast</div><div>Saturation</div><div>Temperature</div><div>Sharpen</div>
+      <h4 style="margin-top:22px">Layers</h4><div>Background</div><div>Sun glow</div></div>
+    <div class="canvas"><div class="photo"><div class="sun"></div></div></div>
+  </div>
+  <div class="status"><span>3024 × 1984 px</span><span>Zoom 21%</span><span>Unsaved changes</span></div>
+</div>
+<div class="shade"></div>
+<div class="dialog">
+  <h3>Save changes to “sunset_beach.raw”?</h3>
+  <p>Your edits will be lost if you close the image without saving.</p>
+  <div class="row"><div class="btn">Don’t Save</div><div class="btn">Cancel</div><div class="btn primary">Save</div></div>
+</div>
+</body></html>
