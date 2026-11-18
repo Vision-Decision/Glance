@@ -3,7 +3,7 @@
     pip install -e ".[demo]" playwright && python -m playwright install chromium   # playwright only for the GUI mock
     python examples/make_demo.py                      # run the model, save assets/demo_predictions.json, render
     python examples/make_demo.py --from-json          # re-render from the saved predictions (no model needed)
-    python examples/make_demo.py --model aac6fef/Glance-4B-preview --device mps
+    python examples/make_demo.py --model Vision-Decision/Glance-4B-preview --device mps
 
 Every box, probability and bar in the animation is read from the model's output for that exact image / text and
 question; nothing is edited by hand. The predictions are saved next to the GIF so they can be audited.
@@ -290,7 +290,7 @@ def render(preds, out_gif, out_mp4, hold=4.6):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--model", default="aac6fef/Glance-4B-preview")
+    ap.add_argument("--model", default="Vision-Decision/Glance-4B-preview")
     ap.add_argument("--device", default=None)
     ap.add_argument("--from-json", action="store_true", help="re-render from assets/demo_predictions.json")
     a = ap.parse_args()

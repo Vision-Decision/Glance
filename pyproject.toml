@@ -25,7 +25,7 @@ demo = ["matplotlib", "numpy"]
 
 [project.urls]
 Homepage = "https://github.com/Vision-Decision/Glance"
-Weights = "https://huggingface.co/aac6fef/Glance-4B-preview"
+Weights = "https://huggingface.co/Vision-Decision/Glance-4B-preview"
 
 [tool.setuptools]
 packages = ["glance"]

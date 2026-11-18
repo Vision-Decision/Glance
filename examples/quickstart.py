@@ -1,6 +1,6 @@
 """Run every API call shown in the README and print the results.
 
-    python examples/quickstart.py [--model aac6fef/Glance-4B-preview] [--device cuda|mps|cpu] [--draw]
+    python examples/quickstart.py [--model Vision-Decision/Glance-4B-preview] [--device cuda|mps|cpu] [--draw]
 
 --draw also writes assets/example_boxes.png (predicted boxes; absent targets listed with their P(present)).
 """
@@ -24,7 +24,7 @@ def timed(label, fn):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--model", default="aac6fef/Glance-4B-preview")
+    ap.add_argument("--model", default="Vision-Decision/Glance-4B-preview")
     ap.add_argument("--device", default=None)
     ap.add_argument("--draw", action="store_true")
     a = ap.parse_args()

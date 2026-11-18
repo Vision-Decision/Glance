@@ -2,7 +2,7 @@
 
 **一次前向，对图像或文本给出校准过的类型化决策。**
 
-[English](README.md) · [用法](#用法) · [基准](README.md#benchmarks) · [Hugging Face 权重](https://huggingface.co/aac6fef/Glance-4B-preview) · [更新日志](CHANGELOG.md)
+[English](README.md) · [用法](#用法) · [基准](README.md#benchmarks) · [Hugging Face 权重](https://huggingface.co/Vision-Decision/Glance-4B-preview) · [更新日志](CHANGELOG.md)
 
 Glance 回答类型化问题：找到某个物体、从选项中挑一个、判断是或否、按等级打分，每个答案都带校准过的概率。图像或文本只读一次，所有问题都由这一次 prefill 回答，不逐 token 生成。目标不在图里时，它会回答"不存在"并给出概率。在 RTX PRO 6000 上，对一张 COCO 图片问 8 个问题约 **86 ms**，和问 1 个一样；生成式的基座模型需要 3.2 s。
 
@@ -18,7 +18,7 @@ pip install flash-linear-attention   # 可选，仅 CUDA：Gated-DeltaNet 快速
 ```python
 from glance import Glance
 
-m = Glance.from_pretrained("aac6fef/Glance-4B-preview")   # 依次尝试 cuda、mps、cpu
+m = Glance.from_pretrained("Vision-Decision/Glance-4B-preview")   # 依次尝试 cuda、mps、cpu
 r = m.box("assets/examples/park_bench.jpg", "the clear umbrella")
 print(r.present_prob, r.box, r.confidence)                 # 0.996 (189.2, 9.3, 373.6, 164.8) 0.8233
 ```
@@ -39,7 +39,7 @@ print(r.present_prob, r.box, r.confidence)                 # 0.996 (189.2, 9.3, 
 ```python
 from glance import Glance, Choice, YesNo, Score
 
-m = Glance.from_pretrained("aac6fef/Glance-4B-preview")
+m = Glance.from_pretrained("Vision-Decision/Glance-4B-preview")
 m.box("assets/examples/park_bench.jpg", "a red bicycle")          # 图中没有
 # BoxResult('a red bicycle', present_prob=0.000, box=[5, 171, 236, 363], confidence=0.000)
 m.yesno("assets/examples/editor.png", "Is a save dialog open?")
@@ -65,5 +65,5 @@ Glance-4B-preview 在"目标不存在"的判断和拒答、校准以及速度上
 ## 许可
 
 - 本仓库代码：Apache-2.0。
-- 权重（`aac6fef/Glance-4B-preview`）：**CC BY-NC 4.0，仅限非商业用途**。训练数据包含仅限非商用的 gRefCOCO，以及部分许可无法确认的文本数据源。
+- 权重（`Vision-Decision/Glance-4B-preview`）：**CC BY-NC 4.0，仅限非商业用途**。训练数据包含仅限非商用的 gRefCOCO，以及部分许可无法确认的文本数据源。
 - 基座模型 Qwen/Qwen3.5-4B：Apache-2.0。

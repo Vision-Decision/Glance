@@ -3,10 +3,10 @@
 **Calibrated typed decisions about an image or a text, in one forward pass.**
 
 [![Code license: Apache-2.0](https://img.shields.io/badge/code-Apache--2.0-blue.svg)](LICENSE)
-[![Weights license: CC BY-NC 4.0](https://img.shields.io/badge/weights-CC%20BY--NC%204.0-lightgrey.svg)](https://huggingface.co/aac6fef/Glance-4B-preview)
-[![Hugging Face: Glance-4B-preview](https://img.shields.io/badge/%F0%9F%A4%97%20weights-Glance--4B--preview-yellow.svg)](https://huggingface.co/aac6fef/Glance-4B-preview)
+[![Weights license: CC BY-NC 4.0](https://img.shields.io/badge/weights-CC%20BY--NC%204.0-lightgrey.svg)](https://huggingface.co/Vision-Decision/Glance-4B-preview)
+[![Hugging Face: Glance-4B-preview](https://img.shields.io/badge/%F0%9F%A4%97%20weights-Glance--4B--preview-yellow.svg)](https://huggingface.co/Vision-Decision/Glance-4B-preview)
 
-[中文](README.zh-CN.md) · [Usage](#usage) · [Benchmarks](#benchmarks) · [Hugging Face weights](https://huggingface.co/aac6fef/Glance-4B-preview) · [Changelog](CHANGELOG.md)
+[中文](README.zh-CN.md) · [Usage](#usage) · [Benchmarks](#benchmarks) · [Hugging Face weights](https://huggingface.co/Vision-Decision/Glance-4B-preview) · [Changelog](CHANGELOG.md)
 
 Glance answers typed questions (find this object, pick an option, yes or no, rate on a scale) with calibrated
 probabilities. It reads the image or text once and answers every question from that single prefill, without
@@ -30,7 +30,7 @@ pip install flash-linear-attention
 ```python
 from glance import Glance
 
-m = Glance.from_pretrained("aac6fef/Glance-4B-preview")   # picks cuda, then mps, then cpu
+m = Glance.from_pretrained("Vision-Decision/Glance-4B-preview")   # picks cuda, then mps, then cpu
 r = m.box("assets/examples/park_bench.jpg", "the clear umbrella")
 print(r.present_prob, r.box, r.confidence)                 # 0.996 (189.2, 9.3, 373.6, 164.8) 0.8233
 ```
@@ -95,7 +95,7 @@ bf16 the numbers differ in the third decimal.
 ```python
 from glance import Glance, Box, Choice, YesNo, Score
 
-m = Glance.from_pretrained("aac6fef/Glance-4B-preview")
+m = Glance.from_pretrained("Vision-Decision/Glance-4B-preview")
 park = "assets/examples/park_bench.jpg"
 
 m.box(park, "the clear umbrella")
@@ -299,7 +299,7 @@ models report one.
 ## License
 
 - **Code** in this repository: [Apache-2.0](LICENSE).
-- **Weights** (`aac6fef/Glance-4B-preview`, the LoRA adapter and heads): **CC BY-NC 4.0**, non-commercial. The
+- **Weights** (`Vision-Decision/Glance-4B-preview`, the LoRA adapter and heads): **CC BY-NC 4.0**, non-commercial. The
   training data includes gRefCOCO (non-commercial) and some text sources whose licenses we could not confirm.
 - **Base model** [Qwen/Qwen3.5-4B](https://huggingface.co/Qwen/Qwen3.5-4B): Apache-2.0, downloaded from its own
   repository.
@@ -318,7 +318,7 @@ A paper is in preparation. Until then:
   author = {Vision-Decision},
   year   = {2026},
   url    = {https://github.com/Vision-Decision/Glance},
-  note   = {Glance-4B-preview, https://huggingface.co/aac6fef/Glance-4B-preview}
+  note   = {Glance-4B-preview, https://huggingface.co/Vision-Decision/Glance-4B-preview}
 }
 ```
 

@@ -135,7 +135,7 @@ def _norm_question(q):
 class Glance:
     """Glance typed-decision model.
 
-    >>> m = Glance.from_pretrained("aac6fef/Glance-4B-preview")
+    >>> m = Glance.from_pretrained("Vision-Decision/Glance-4B-preview")
     >>> m.box("photo.jpg", "the red mug on the left")
     """
 
@@ -147,7 +147,7 @@ class Glance:
 
     # ----------------------------------------------------------------------------------- loading
     @classmethod
-    def from_pretrained(cls, repo_or_path="aac6fef/Glance-4B-preview", device=None, dtype=None, base_model=None,
+    def from_pretrained(cls, repo_or_path="Vision-Decision/Glance-4B-preview", device=None, dtype=None, base_model=None,
                         revision=None):
         """Load the base model from the Hub, inject the LoRA adapter and load the heads.
 
