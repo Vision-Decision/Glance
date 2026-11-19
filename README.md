@@ -185,7 +185,7 @@ screenshot in a single pass at ≤2,048 visual tokens without zoom.
 | gRefCOCO val (no-target) | N-acc | 87.4 |
 | gRefCOCO val + RefCOCO val | AUROC of P(present) | 97.9 |
 | gRefCOCO val + RefCOCO val | ECE of P(present) / of box confidence | 2.4% / 3.8% |
-| VenusBench-GD | refusal / grounding (positives) / overall | 81.5 / 47.3 / 52.3 |
+| VenusBench-GD (official evaluator) | refusal / overall | 81.8 / 40.1 |
 | ScreenSpot-v2 | click accuracy | 89.4 |
 | ScreenSpot-Pro | click accuracy | 29.3 |
 | OpenDecisions (2,352 items) | capability / calibration | 67.6 / 80.4 |
@@ -200,10 +200,10 @@ screenshot in a single pass at ≤2,048 visual tokens without zoom.
 | | RefCOCO+ testB (Acc@0.5) | 84.6 | — | — | — | — | — |
 | | RefCOCOg test (Acc@0.5) | 90.4 | — | — | — | — | — |
 | Absence / refusal | gRefCOCO val, no-target (N-acc) | **87.4** | 65.0ᵈ | — | — | — | 85.3ᵉ |
-| | VenusBench-GD refusal (acc.) | **81.5**ᶠ | — | 63.8ᵍ | 61.6ʰ | — | — |
+| | VenusBench-GD refusal (acc.) | **81.8**ᶠ | — | 63.8ᵍ | 61.6ʰ | — | — |
 | GUI grounding | ScreenSpot-v2 (click acc.) | 89.4 | 93.4ᵈ | 92.1ʰ | **95.9**ʰ | 94.1ⁱ | — |
 | | ScreenSpot-Pro (click acc.) | 29.3 | 60.3ᵇ | 54.6ᶜ | **68.4**ʰ | 67.0ⁱ | — |
-| | VenusBench-GD overall (acc.) | 52.3ᶠ | — | 62.3ᵍ | **72.3**ʰ | — | — |
+| | VenusBench-GD overall (acc.) | 40.1ᶠ | — | 62.3ᵍ | **72.3**ʰ | — | — |
 | Typed decisions | OpenDecisions (capability) | **67.6**ʲ | 63.6ʲ | — | — | — | — |
 | Calibration | Box-confidence ECE, gRefCOCO val (↓) | 3.8%ᵏ | — | — | — | — | — |
 | | P(present) ECE, gRefCOCO val (↓) | 2.4%ᵏ | — | — | — | — | — |
@@ -249,10 +249,10 @@ models report one.
   unoptimised HF generation, so a serving engine would be faster.
 - ᵉ RC-GRPO, [arXiv:2608.04698](https://arxiv.org/abs/2608.04698), Table 1: RC-GRPO-II on Qwen3-VL-4B, gRefCOCO val
   N-acc. The same table gives 77.2 for Qwen3-VL-4B-Instruct.
-- ᶠ Scored with our own script, not yet with the official UI-Venus evaluation code: a refusal item is correct iff
-  P(present) < 0.5; a positive item is correct iff the box center lies inside the ground-truth box. Overall is the
-  micro-average over all 6,165 items in our copy (899 refusal); the paper lists 6,166 items (900 refusal), and its
-  Overall is the same micro-average including refusal items.
+- ᶠ Official UI-Venus evaluation code. Glance refuses when P(present) < 0.5, and a refused item gets no click, so a
+  refusal on a positive item counts as wrong. Overall is the micro-average over all 6,165 items in our copy (899
+  refusal); the paper lists 6,166 items (900 refusal). An earlier version of this table showed 81.5 / 52.3 from our
+  own script, which still scored the click on positive items the model had refused; that overall is withdrawn.
 - ᵍ VenusBench-GD paper, [arXiv:2512.16501](https://arxiv.org/abs/2512.16501), Table 5 (Qwen3-VL-8B: overall 62.34,
   refusal 63.78). The UI-Venus-1.5 report reproduces Qwen3-VL-8B much lower (overall 55.1, refusal 6.8), so refusal
   scores of generative models depend strongly on prompt and refusal format.
