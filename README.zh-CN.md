@@ -58,9 +58,12 @@ rs = m.ask("assets/examples/vegetables.jpg", [
 
 ## 基准
 
-![基准对比](assets/benchmarks.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/benchmark-table-dark.svg">
+  <img width="100%" alt="基准对比表：Glance-4B-preview 与 Qwen3.5-4B、Qwen3-VL-4B、Qwen3-VL-8B、Glance-X-4B 对比" src="assets/benchmark-table-light.svg">
+</picture>
 
-Glance-4B-preview 在"目标不存在"的判断和拒答、校准以及速度上领先，指代定位也超过生成式基座。它在 ScreenSpot-Pro 和 VenusBench-GD 定位上明显落后于 GUI 专用模型。数据来源、评测协议和脚注见 [英文 README](README.md#benchmarks)。
+Glance-4B-preview 在"目标不存在"的拒答和速度上领先，指代定位也超过生成式基座。Glance-X-4B 在多数 RefCOCO 子集和存在判断 AUROC 上领先，Qwen3-VL-4B 在官方 GREC 指标上领先，基座和 Qwen3-VL 在 GUI 定位上领先。蓝色格表示 Glance 最好，灰色格表示其他模型最好。数据来源、评测协议和脚注见 [英文 README](README.md#benchmarks)。
 
 ## 许可
 

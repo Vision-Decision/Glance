@@ -165,14 +165,19 @@ rs = m.ask("assets/examples/vegetables.jpg", [
 
 ## Benchmarks
 
-![Benchmark comparison table](assets/benchmarks.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/benchmark-table-dark.svg">
+  <img width="100%" alt="Benchmark table: Glance-4B-preview against Qwen3.5-4B, Qwen3-VL-4B, Qwen3-VL-8B and Glance-X-4B (joint) on referring grounding, absence, multi-target, GUI grounding and speed; blue cells where Glance is best, grey where another model is best. The same values are in the table below." src="assets/benchmark-table-light.svg">
+</picture>
 
-<sub>Also as [SVG](assets/benchmarks.svg); regenerate with `python scripts/make_benchmark_table.py`.</sub>
+<sub>Also as PNG ([light](assets/benchmark-table-light.png), [dark](assets/benchmark-table-dark.png)); regenerate with
+`python scripts/bench_table.py scripts/benchmark_table.json assets/benchmark-table`. Every cell's source:
+[docs/benchmark_sources.md](docs/benchmark_sources.md).</sub>
 
-Glance-4B-preview leads on absence and refusal, calibration and latency, and it is ahead of the generative base on
-referring grounding. It trails the GUI specialists clearly on ScreenSpot-Pro and VenusBench-GD grounding (and
-the base model on ScreenSpot-v2): the preview saw relatively little high-resolution GUI data, and it reads a
-screenshot in a single pass at ≤2,048 visual tokens without zoom.
+Glance-4B-preview leads on rejecting absent objects (gRefCOCO no-target, VenusBench-GD refusal) and on speed, and
+it is ahead of the generative base on referring grounding. Glance-X-4B is ahead on most RefCOCO splits and on
+presence AUROC, Qwen3-VL-4B on the official GREC metric, and the base model and Qwen3-VL on GUI grounding: the
+preview saw relatively little high-resolution GUI data and reads a screenshot in a single pass without zoom.
 
 ### Full results for Glance-4B-preview
 
@@ -193,32 +198,47 @@ screenshot in a single pass at ≤2,048 visual tokens without zoom.
 
 ### Comparison (same as the image)
 
-| Category | Benchmark (metric) | **Glance-4B-preview** | Qwen3.5-4B | Qwen3-VL-8B | UI-Venus-1.5-8B | KV-Ground-4B | RC-GRPO-II-4B |
-|---|---|---|---|---|---|---|---|
-| Referring grounding | RefCOCO / + / g, average (Acc@0.5) | **90.8**ᵃ | 88.1ᵇ | 89.1ᶜ | — | — | — |
-| | RefCOCO val (Acc@0.5) | **93.2** | 91.4ᵈ | — | — | — | — |
-| | RefCOCO+ testB (Acc@0.5) | 84.6 | — | — | — | — | — |
-| | RefCOCOg test (Acc@0.5) | 90.4 | — | — | — | — | — |
-| Absence / refusal | gRefCOCO val, no-target (N-acc) | **87.4** | 65.0ᵈ | — | — | — | 85.3ᵉ |
-| | VenusBench-GD refusal (acc.) | **81.8**ᶠ | — | 63.8ᵍ | 61.6ʰ | — | — |
-| GUI grounding | ScreenSpot-v2 (click acc.) | 89.4 | 93.4ᵈ | 92.1ʰ | **95.9**ʰ | 94.1ⁱ | — |
-| | ScreenSpot-Pro (click acc.) | 29.3 | 60.3ᵇ | 54.6ᶜ | **68.4**ʰ | 67.0ⁱ | — |
-| | VenusBench-GD overall (acc.) | 40.1ᶠ | — | 62.3ᵍ | **72.3**ʰ | — | — |
-| Typed decisions | OpenDecisions (capability) | **67.6**ʲ | 63.6ʲ | — | — | — | — |
-| Calibration | Box-confidence ECE, gRefCOCO val (↓) | 3.8%ᵏ | — | — | — | — | — |
-| | P(present) ECE, gRefCOCO val (↓) | 2.4%ᵏ | — | — | — | — | — |
-| Efficiency | Latency, 1 question (ms, ↓) | **85**ˡ | 400ᵈ | — | — | — | — |
-| | Latency, 8 questions per image (ms, ↓) | **86**ˡ | 3,161ᵈ | — | — | — | — |
+| Category | Benchmark (metric) | **Glance-4B-preview** | Qwen3.5-4B | Qwen3-VL-4B | Qwen3-VL-8B | Glance-X-4B joint |
+|---|---|---|---|---|---|---|
+| Referring grounding | RefCOCO val (Acc@0.5) | **93.2** | 91.4‡ | — | — | 93.1† |
+|  | RefCOCO testA (Acc@0.5) | 94.5 | — | — | — | **94.9†** |
+|  | RefCOCO testB (Acc@0.5) | **90.7** | — | — | — | 90.5† |
+|  | RefCOCO+ val (Acc@0.5) | **89.7** | — | — | — | 89.6† |
+|  | RefCOCO+ testA (Acc@0.5) | **93.3** | — | — | — | 93.1† |
+|  | RefCOCO+ testB (Acc@0.5) | 84.6 | — | — | — | **84.9†** |
+|  | RefCOCOg val (Acc@0.5) | 90.0 | — | — | — | **90.3†** |
+|  | RefCOCOg test (Acc@0.5) | 90.4 | — | — | — | **90.5†** |
+|  | RefCOCO / + / g mean (8 splits) | 90.8 | 88.1† | — | — | **90.9†** |
+| Absence | gRefCOCO val, no target (rejected) | **87.4** | 65.0‡ | 77.2† | — | 78.9† |
+|  | gRefCOCO testA, no target (rejected) | **80.8** | — | 70.2† | — | 71.3† |
+|  | gRefCOCO testB, no target (rejected) | **77.1** | — | 70.2† | — | 73.0† |
+|  | gRefCOCO val (AUROC of P(present)) | 97.9 | — | — | — | **98.2†** |
+|  | gRefCOCO testA (AUROC of P(present)) | 94.1 | — | — | — | **97.4†** |
+|  | gRefCOCO testB (AUROC of P(present)) | 88.7 | — | — | — | **93.5†** |
+|  | GREC val / official (Pr@(F1=1)) | 71.6 | — | **72.4†** | — | — |
+|  | GREC testA / official (Pr@(F1=1)) | 47.5 | — | **68.0†** | — | — |
+|  | GREC testB / official (Pr@(F1=1)) | 51.3 | — | **62.2†** | — | — |
+|  | VenusBench-GD refusal (official scorer) | **81.76** | — | 31.55† | 63.78† | — |
+| Multi-target | gRefCOCO val (multi-target F1) | — | — | — | — | 82.7† |
+| GUI grounding | ScreenSpot-v2 (click acc.; Glance ≤2,048 tokens, base ≤4,000) | 89.4 | **93.4** | — | 92.1† | — |
+|  | ScreenSpot-Pro (native resolution) | 39.3 | **59.9** | — | — | — |
+|  | ScreenSpot-Pro, zoom track (2 passes) | 58.1 | — | — | — | — |
+|  | VenusBench-GD overall (official scorer) | 40.06 | — | 56.15† | **62.34†** | — |
+| Speed (ms, ↓) | 8 box questions, one image (vs 8 HF generate calls) | **85.6** | 3,161.2 | — | — | — |
+|  | 32 box questions, served (Glance Engine vs vLLM BF16) | **48.9** | 334.0 | — | — | — |
 
-"—" means not reported in a primary source we could verify. Bold marks the best value in a row where at least two
-models report one.
+"—" means not measured or not reported. Bold marks the best value in a row where at least two models report one;
+ties at the shown precision are all bold. Unmarked values are our measurements; † reported elsewhere (see
+*Sources*); ‡ random 500-expression sample.
 
 ### Protocol
 
 - **Glance numbers** come from one evaluation run of the released checkpoint (step 3,844) on an RTX PRO 6000
   Blackwell in bf16 with the `fla` kernels. Every number is single-pass: no zoom, no test-time augmentation, no
   second look. Natural images are resized to ≤640 visual tokens (COCO 640×480 → 29×22 patches); GUI screenshots to
-  ≤2,048 visual tokens (upscaling up to 2× allowed).
+  ≤2,048 visual tokens (upscaling up to 2× allowed). In the comparison, ScreenSpot-Pro is read at native resolution
+  (median 4,080 visual tokens, no upscaling) to match our base-model run: 39.3, against 29.3 at ≤2,048 tokens. The
+  zoom-track row adds a second pass on a 0.25 crop.
 - **REC metric.** Acc@0.5 is the fraction of expressions whose decoded box reaches IoU ≥ 0.5 with the ground truth,
   ignoring the presence gate (standard REC). With the gate required (P(present) ≥ 0.5), RefCOCO val drops from 93.2
   to 92.0.
@@ -232,43 +252,29 @@ models report one.
   ours (some report thinking mode, some use their own reproductions), so treat cross-column comparisons as
   indicative.
 
-### Footnotes
+### Sources
 
-- ᵃ Mean of the 8 splits listed under *Full results*.
-- ᵇ Qwen3.5-4B official model card, <https://huggingface.co/Qwen/Qwen3.5-4B>, rows "RefCOCO(avg)" and
-  "ScreenSpot Pro". The card does not say which RefCOCO splits are averaged or whether thinking mode was used
-  (thinking is the model's default).
-- ᶜ Qwen3-VL technical report, [arXiv:2511.21631](https://arxiv.org/abs/2511.21631), Table 4, Qwen3-VL-8B-Instruct
-  ("RefCOCO-avg", splits not stated; ScreenSpot Pro).
-- ᵈ Our measurement of the generative Qwen3.5-4B (bf16, greedy, thinking off, HF `generate`) on the same GPU and image
-  resolution as Glance. RefCOCO val and gRefCOCO no-target: random 500-expression subsets (seed 0) with the prompt
-  "Locate the object described as … Output its bounding box as [x1, y1, x2, y2] … If no such object is in the image,
-  answer exactly "none"". ScreenSpot-v2: all 1,272 items with the official ScreenSpot-Pro Qwen3.5 prompt at ≤4,000
-  visual tokens. Latency: median per image for 1 question, and for 8 questions about the same image answered by 8
-  sequential `generate` calls; unlike Glance's timing it includes the processor call (≈ a few ms) and it uses
-  unoptimised HF generation, so a serving engine would be faster.
-- ᵉ RC-GRPO, [arXiv:2608.04698](https://arxiv.org/abs/2608.04698), Table 1: RC-GRPO-II on Qwen3-VL-4B, gRefCOCO val
-  N-acc. The same table gives 77.2 for Qwen3-VL-4B-Instruct.
-- ᶠ Official UI-Venus evaluation code. Glance refuses when P(present) < 0.5, and a refused item gets no click, so a
-  refusal on a positive item counts as wrong. Overall is the micro-average over all 6,165 items in our copy (899
-  refusal); the paper lists 6,166 items (900 refusal). An earlier version of this table showed 81.5 / 52.3 from our
-  own script, which still scored the click on positive items the model had refused; that overall is withdrawn.
-- ᵍ VenusBench-GD paper, [arXiv:2512.16501](https://arxiv.org/abs/2512.16501), Table 5 (Qwen3-VL-8B: overall 62.34,
-  refusal 63.78). The UI-Venus-1.5 report reproduces Qwen3-VL-8B much lower (overall 55.1, refusal 6.8), so refusal
-  scores of generative models depend strongly on prompt and refusal format.
-- ʰ UI-Venus-1.5 technical report, [arXiv:2602.09082](https://arxiv.org/abs/2602.09082), Table 1 (ScreenSpot-Pro,
-  ScreenSpot-v2, VenusBench-GD overall) and Table 9 (refusal). The Qwen3-VL-8B ScreenSpot-v2 value is that report's
-  reproduction. The KV-Ground card lists UI-Venus-1.5-8B at 93.2 on ScreenSpot-v2.
-- ⁱ KV-Ground-4B-BaseGuiOwl1.5-0228 model card, <https://huggingface.co/vocaela/KV-Ground-4B-BaseGuiOwl1.5-0228>
-  (GUI-Owl-1.5-4B base, no zoom).
-- ʲ OpenDecisions' own `score.py` on all 2,352 items. Both models answer in one pass by reading the probabilities of the
-  answer-label tokens (the base model through its LM head) with temperatures fitted on held-out training-distribution
-  data. Without temperatures: Glance 67.1, base 51.9.
-- ᵏ gRefCOCO val (8,905 no-target expressions) merged with RefCOCO val (the same 1,500 images; this gRefCOCO release
-  has no single-target val expressions), 25,063 expressions. Box confidence is scored against the event
-  "present and IoU ≥ 0.5".
-- ˡ Median over 100 RefCOCO val images, batch 1, bf16 + `fla`, RTX PRO 6000 Blackwell Server Edition; includes the
-  vision encoder and all heads, excludes JPEG decoding and resizing.
+Cell by cell: [benchmark_sources.md](docs/benchmark_sources.md).
+
+- Qwen3.5-4B model card, <https://huggingface.co/Qwen/Qwen3.5-4B>, "RefCOCO(avg)" (splits not stated).
+- RC-GRPO, [arXiv:2608.04698](https://arxiv.org/abs/2608.04698), Table 1: Qwen3-VL-4B-Instruct on gRefCOCO (GREC
+  Pr@(F1=1) and N-acc, official protocol).
+- VenusBench-GD, [arXiv:2512.16501](https://arxiv.org/abs/2512.16501), Table 5: Qwen3-VL-4B and -8B overall and
+  refusal. The UI-Venus-1.5 report reproduces Qwen3-VL-8B much lower (overall 55.1, refusal 6.8), so refusal scores of
+  generative models depend strongly on prompt and refusal format.
+- UI-Venus-1.5, [arXiv:2602.09082](https://arxiv.org/abs/2602.09082), Table 1: Qwen3-VL-8B on ScreenSpot-v2 (that
+  report's reproduction).
+- Glance-X-4B: [Glanece-Training docs/RESULTS.md](https://github.com/Vision-Decision/Glanece-Training/blob/main/docs/RESULTS.md),
+  joint direction (K=8, step 6,100).
+- Our base-model runs: generative Qwen3.5-4B, bf16, greedy, thinking off, HF `generate`, same GPU. RefCOCO val and
+  gRefCOCO no-target on random 500-expression subsets; ScreenSpot-v2 on all 1,272 items at ≤4,000 visual tokens;
+  ScreenSpot-Pro on all 1,581 items at native resolution; latency: 8 questions about one image as 8 sequential
+  `generate` calls.
+- Served latency: Glance Engine against vLLM 0.34.0 serving Qwen3.5-4B in BF16, 32 box questions about one image,
+  warm median on one RTX PRO 6000
+  ([CEILING.md](https://github.com/Vision-Decision/glance-engine/blob/release/outputs/engine_opt/CEILING.md)).
+- Official UI-Venus evaluation code for VenusBench-GD: Glance refuses when P(present) < 0.5, and a refused positive
+  item counts as wrong. Our copy has 6,165 items (899 refusal); the paper lists 6,166 (900).
 
 ## Limitations
 
