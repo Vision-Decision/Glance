@@ -307,6 +307,7 @@ Cell by cell: [benchmark_sources.md](docs/benchmark_sources.md).
 - **Code** in this repository: [Apache-2.0](LICENSE).
 - **Weights** (`Vision-Decision/Glance-4B-preview`, the LoRA adapter and heads): **CC BY-NC 4.0**, non-commercial. The
   training data includes gRefCOCO (non-commercial) and some text sources whose licenses we could not confirm.
+- **Public models and datasets** on Hugging Face, each with its own licence: [docs/DATA.md](docs/DATA.md).
 - **Base model** [Qwen/Qwen3.5-4B](https://huggingface.co/Qwen/Qwen3.5-4B): Apache-2.0, downloaded from its own
   repository.
 - **Example images**: `assets/examples/park_bench.jpg` and `vegetables.jpg` are COCO test2017 images 448261 and
