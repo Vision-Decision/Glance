@@ -13,6 +13,11 @@ Each repository's card gives its sources, what was removed and why, and its lice
 | repository | what it is | licence |
 |---|---|---|
 | [Glance-4B-preview](https://huggingface.co/Vision-Decision/Glance-4B-preview) | Glance v1: LoRA adapter and decision heads on Qwen3.5-4B. This is the model the `glance` package loads by default. | CC BY-NC 4.0 |
+| [Glance-4B-v1.1](https://huggingface.co/Vision-Decision/Glance-4B-v1.1) | v1 recipe plus high-resolution GUI data; superseded, kept for reproducibility. | CC BY-NC 4.0 |
+| [Glance-4B-v1.2](https://huggingface.co/Vision-Decision/Glance-4B-v1.2) | v1.1 plus expressions without category words and matched negatives; superseded. | CC BY-NC 4.0 |
+| [Glance-4B-v1.2b](https://huggingface.co/Vision-Decision/Glance-4B-v1.2b) | v1.2 plus multi-box heads; superseded by v1.3b. | CC BY-NC 4.0 |
+| [Glance-4B-v1.3](https://huggingface.co/Vision-Decision/Glance-4B-v1.3) | re-balanced v1.2; recommended for single-box use. | CC BY-NC 4.0 |
+| [Glance-4B-v1.3b](https://huggingface.co/Vision-Decision/Glance-4B-v1.3b) | v1.3 plus multi-box heads; recommended for multi-target use (needs `glance` 0.2.0). | CC BY-NC 4.0 |
 
 ## Training data
 

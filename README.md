@@ -6,7 +6,7 @@
 [![Weights license: CC BY-NC 4.0](https://img.shields.io/badge/weights-CC%20BY--NC%204.0-lightgrey.svg)](https://huggingface.co/Vision-Decision/Glance-4B-preview)
 [![Hugging Face: Glance-4B-preview](https://img.shields.io/badge/%F0%9F%A4%97%20weights-Glance--4B--preview-yellow.svg)](https://huggingface.co/Vision-Decision/Glance-4B-preview)
 
-[中文](README.zh-CN.md) · [Usage](#usage) · [Benchmarks](#benchmarks) · [Hugging Face weights](https://huggingface.co/Vision-Decision/Glance-4B-preview) · [Changelog](CHANGELOG.md)
+[中文](README.zh-CN.md) · [Usage](#usage) · [Benchmarks](#benchmarks) · [Versions](#versions) · [Hugging Face weights](https://huggingface.co/Vision-Decision/Glance-4B-preview) · [Changelog](CHANGELOG.md)
 
 Glance answers typed questions (find this object, pick an option, yes or no, rate on a scale) with calibrated
 probabilities. It reads the image or text once and answers every question from that single prefill, without
@@ -276,13 +276,66 @@ Cell by cell: [benchmark_sources.md](docs/benchmark_sources.md).
 - Official UI-Venus evaluation code for VenusBench-GD: Glance refuses when P(present) < 0.5, and a refused positive
   item counts as wrong. Our copy has 6,165 items (899 refusal); the paper lists 6,166 (900).
 
+## Versions
+
+Every checkpoint is a separate Hugging Face repository and loads with `Glance.from_pretrained(repo)`. Each card
+lists what changed, the full results against that version's pre-registered bars, and its known regressions.
+
+| Version | Weights | Built from | Summary | Use it for |
+|---|---|---|---|---|
+| v1 | [Glance-4B-preview](https://huggingface.co/Vision-Decision/Glance-4B-preview) | Qwen3.5-4B | first public release; every number above | the reference preview |
+| v1.1 | [Glance-4B-v1.1](https://huggingface.co/Vision-Decision/Glance-4B-v1.1) | Qwen3.5-4B | v1 recipe plus high-resolution GUI data; RefCOCO 8-split 92.8, but many false "not present" on function, generic and relational wording | reproducing v1.1 |
+| v1.2 | [Glance-4B-v1.2](https://huggingface.co/Vision-Decision/Glance-4B-v1.2) | v1.1 | fixes the description-shift failures (false "not present" 37–51% → 1–4%); RefCOCO 8-split drops to 91.4 | reproducing v1.2 |
+| v1.2b | [Glance-4B-v1.2b](https://huggingface.co/Vision-Decision/Glance-4B-v1.2b) | v1.2 | adds multi-box heads (gRefCOCO multi-target set F1 79.7) | reproducing v1.2b |
+| v1.3 | [Glance-4B-v1.3](https://huggingface.co/Vision-Decision/Glance-4B-v1.3) | v1.2 | re-balanced mix: RefCOCO 8-split back to 92.7, description-shift gains kept; Chinese no-target N-acc falls 82.3 → 65.6 | **single-box use** |
+| v1.3b | [Glance-4B-v1.3b](https://huggingface.co/Vision-Decision/Glance-4B-v1.3b) | v1.3 | v1.3 plus multi-box heads: multi-target set F1 82.7; RefCOCO 8-split 0.72 below v1.3 | **multi-target use** |
+
+Multi-box models answer `Boxes` questions with every instance an expression covers:
+
+```python
+m = Glance.from_pretrained("Vision-Decision/Glance-4B-v1.3b")
+m.boxes("park_bench.jpg", "the people on the bench")   # BoxesResult(..., boxes=[[...], [...]])
+```
+
+### Quick bench across versions
+
+[`examples/quick_bench.py`](examples/quick_bench.py) runs in a few minutes on one GPU on small fixed subsets of
+public benchmarks (item ids in [`examples/quick_bench_items.json`](examples/quick_bench_items.json), seed 0):
+
+```bash
+pip install pandas
+python examples/quick_bench.py --model Vision-Decision/Glance-4B-v1.3
+```
+
+| Version | RefCOCO val Acc@0.5 (200) | gRefCOCO no-target N-acc (200) | gRefCOCO multi-target set F1 (100) | ScreenSpot-v2 click (100) | Latency, 1 / 8 questions (ms) |
+|---|---|---|---|---|---|
+| v1 ([Glance-4B-preview](https://huggingface.co/Vision-Decision/Glance-4B-preview)) | 93.5 | 86.5 | 47.3 (1 box) | 91.0 | 96 / 97 |
+| v1.1 ([Glance-4B-v1.1](https://huggingface.co/Vision-Decision/Glance-4B-v1.1)) | 96.0 | 86.5 | 48.7 (1 box) | 93.0 | 92 / 92 |
+| v1.2 ([Glance-4B-v1.2](https://huggingface.co/Vision-Decision/Glance-4B-v1.2)) | 93.0 | 85.0 | 50.0 (1 box) | 94.0 | 91 / 92 |
+| v1.2b ([Glance-4B-v1.2b](https://huggingface.co/Vision-Decision/Glance-4B-v1.2b)) | 94.0 | 86.0 | 75.0 | 93.0 | 92 / 92 |
+| v1.3 ([Glance-4B-v1.3](https://huggingface.co/Vision-Decision/Glance-4B-v1.3)) | 94.0 | 87.0 | 46.5 (1 box) | 94.0 | 91 / 92 |
+| v1.3b ([Glance-4B-v1.3b](https://huggingface.co/Vision-Decision/Glance-4B-v1.3b)) | 93.5 | 85.0 | 82.3 | 93.0 | 91 / 91 |
+
+The subset separates what it is meant to: the multi-box models (v1.2b, v1.3b) find every instance of a
+multi-target expression (set F1 75 and 82, against 47 to 50 for one box), and every checkpoint loads and answers at
+about 90 ms whether it gets 1 question or 8. Differences between the single-box versions are within the subset's noise;
+their full-benchmark differences are on the model cards. Raw outputs: [`examples/quick_bench_results/`](examples/quick_bench_results).
+
+**These are subset smoke numbers** (200 / 200 / 100 / 100 items; one standard error is about 2 points at 90%
+accuracy on 200 items and 3 on 100), not the full results on the model cards. RefCOCO is Acc@0.5 without the presence gate; no-target N-acc counts P(present) < 0.5; multi-target
+set F1 asks a `Boxes` question (single-box models answer one box, marked "(1 box)"); ScreenSpot-v2 is click accuracy
+at ≤2,048 visual tokens; latency is the median `ask()` over 30 RefCOCO images with 1 and 8 box questions, image
+already decoded. All rows: one NVIDIA RTX PRO 6000 Blackwell Server Edition (Colab G4), bfloat16, flash-linear-attention on, torch 2.14.1+cu130, transformers 5.22.1; one run per version, about 1.5 min each with data and base weights cached (the first run also downloads the
+base model, about 400 COCO images and 100 screenshots).
+
 ## Limitations
 
 - **Preview.** One epoch on ~212k states / 520k questions. Expect rough edges outside the training mix.
 - **GUI grounding is not competitive yet**, especially on high-resolution professional software (ScreenSpot-Pro
   29.3). Use a GUI specialist if you need click accuracy; Glance's GUI strength today is state checks and refusal.
-- **One box per expression.** The box head returns one box; for multi-target expressions it reports presence and the
-  most likely instance.
+- **One box per expression.** The preview's box head returns one box; for multi-target expressions it reports presence
+  and the most likely instance. Use [Glance-4B-v1.3b](https://huggingface.co/Vision-Decision/Glance-4B-v1.3b) and
+  `Boxes` questions for multiple instances.
 - **Calibration is measured in distribution.** Temperatures were fitted on held-out training-distribution data. On
   shifted data (e.g. VenusBench-GD, AUROC of P(present) 0.74) probabilities are less reliable; recalibrate on your data
   if you depend on thresholds.
@@ -295,12 +348,10 @@ Cell by cell: [benchmark_sources.md](docs/benchmark_sources.md).
 
 ## Roadmap
 
-- **v1.1**: more and harder GUI data (desktop and high-resolution screenshots), label smoothing for choice, scoring
-  with the official VenusBench-GD code.
 - **27B**: the same recipe on a 27B Qwen3.5 base.
 - **Video tool**: a yes/no scan over short clips (P(t) curves for find / count / verify) for agent planners.
 - **Data release**: the training mixture and preparation scripts, once licenses are cleared.
-- Multi-box output (one sigmoid per patch) for multi-target expressions and counting.
+- Multi-box output for multi-target expressions and counting: released in v1.2b and v1.3b (see [Versions](#versions)).
 
 ## License
 
