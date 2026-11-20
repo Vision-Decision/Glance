@@ -23,6 +23,13 @@ class Box:
 
 
 @dataclass
+class Boxes:
+    """Referring expression -> presence + every matching box (multi-target). Needs a model with multi-box heads
+    (Glance-4B-v1.2b, -v1.3b); on other models it returns the single box when the target is present."""
+    text: str
+
+
+@dataclass
 class Choice:
     """Pick one of N options. ``options`` is a list, or a dict label -> description."""
     question: str
@@ -41,7 +48,7 @@ class Score:
     levels: Sequence[str]
 
 
-Question = Union[str, Box, Choice, YesNo, Score, dict]
+Question = Union[str, Box, Boxes, Choice, YesNo, Score, dict]
 
 
 # ------------------------------------------------------------------------------------------- results
@@ -63,6 +70,21 @@ class BoxResult:
         b = ", ".join(f"{v:.0f}" for v in self.box)
         return (f"BoxResult({self.text!r}, present_prob={self.present_prob:.3f}, box=[{b}], "
                 f"confidence={self.confidence:.3f})")
+
+
+@dataclass
+class BoxesResult:
+    text: str
+    present_prob: float                 # P(at least one target is in the image), calibrated
+    boxes: List[Tuple[float, float, float, float]]  # x1, y1, x2, y2 in pixels; empty if present_prob < 0.5
+    confidences: List[float]            # per box: present_prob * P(box is a distinct correct instance)
+    count_probs: Dict[str, float]       # P(n = 1, 2, 3, 4+ | present); empty without multi-box heads
+    present: bool
+    kind: str = "boxes"
+
+    def __repr__(self):
+        bs = ", ".join("[" + ", ".join(f"{v:.0f}" for v in b) + "]" for b in self.boxes)
+        return f"BoxesResult({self.text!r}, present_prob={self.present_prob:.3f}, boxes=[{bs}])"
 
 
 @dataclass
@@ -115,7 +137,7 @@ def _auto_device():
 
 
 def _norm_question(q):
-    if isinstance(q, (Box, Choice, YesNo, Score)):
+    if isinstance(q, (Box, Boxes, Choice, YesNo, Score)):
         return q
     if isinstance(q, str):
         return Box(q)
@@ -123,6 +145,8 @@ def _norm_question(q):
         t = q.get("type", "box")
         if t == "box":
             return Box(q["text"])
+        if t == "boxes":
+            return Boxes(q["text"])
         if t == "choice":
             return Choice(q["question"], q["options"])
         if t in ("yesno", "noul"):
@@ -139,8 +163,9 @@ class Glance:
     >>> m.box("photo.jpg", "the red mug on the left")
     """
 
-    def __init__(self, net, heads, processor, cfg, device, dtype, autocast):
+    def __init__(self, net, heads, processor, cfg, device, dtype, autocast, multibox=None):
         self.net, self.heads, self.processor, self.cfg = net, heads, processor, cfg
+        self.multibox = multibox  # MultiBoxHeads or None
         self.device, self.dtype, self._autocast = device, dtype, autocast
         self.tok = ChatTok(processor.tokenizer, cfg["max_state_tokens"], cfg["max_q_tokens"], cfg["max_q_tokens_typed"])
         self.temperatures = dict(cfg.get("temperatures", {}))
@@ -197,7 +222,16 @@ class Glance:
         heads = GlanceHeads(net.hidden, cfg["heads"], (E.shape[0], gi.shape[0], gi.shape[1]))
         heads.load_state_dict(hsd)
         heads.to(device).float().eval()
-        return cls(net, heads, processor, cfg, device, dtype, autocast)
+        multibox = None
+        mcfg = cfg.get("multibox")
+        if mcfg:
+            from .multibox import MultiBoxHeads
+            msd = load_file(path(mcfg.get("file", "multibox_heads.safetensors")))
+            msd = {k[len("box.multi."):] if k.startswith("box.multi.") else k: v for k, v in msd.items()}
+            multibox = MultiBoxHeads(net.hidden, cfg["heads"]["head_dim"], mcfg.get("count_classes", 4))
+            multibox.load_state_dict(msd)
+            multibox.to(device).float().eval()
+        return cls(net, heads, processor, cfg, device, dtype, autocast, multibox)
 
     # ----------------------------------------------------------------------------------- core
     def _state(self, state, text):
@@ -226,17 +260,18 @@ class Glance:
         """Answer many typed questions about one state in a single shared-prefix forward pass.
 
         state: PIL image, image path, or a text string (or None with ``text=``). ``text=`` adds text after the
-        image. questions: ``Box`` / ``Choice`` / ``YesNo`` / ``Score`` objects, dicts, or plain strings (= Box).
+        image. questions: ``Box`` / ``Boxes`` / ``Choice`` / ``YesNo`` / ``Score`` objects, dicts, or plain strings
+        (= Box).
         max_vis_tokens: visual-token budget (1 token = 32x32 px). 640 matches natural-image training; use
         ~2048 for screenshots. Returns one result object per question, in order.
         """
         img, text = self._state(state, text)
         qs = [_norm_question(q) for q in questions]
-        if any(isinstance(q, Box) for q in qs) and img is None:
+        if any(isinstance(q, (Box, Boxes)) for q in qs) and img is None:
             raise ValueError("box questions need an image")
         blocks, labs = [], []
         for q in qs:
-            if isinstance(q, Box):
+            if isinstance(q, (Box, Boxes)):
                 blocks.append(self.tok.box_block(q.text)); labs.append(None)
             elif isinstance(q, Choice):
                 opts = [f"{k}: {v}" if v else str(k) for k, v in q.options.items()] if isinstance(q.options, dict) \
@@ -249,7 +284,8 @@ class Glance:
         item = make_item(self.tok, self.processor.image_processor, img, text, blocks,
                          max_vis_tokens or self.cfg["max_vis_tokens"],
                          max_upscale if max_upscale is not None else self.cfg["max_upscale"])
-        out = self._forward(collate([item], self.tok))
+        multi = self.multibox is not None and any(isinstance(q, Boxes) for q in qs)
+        out = self._forward(collate([item], self.tok), multi=multi)
         T = self.temperatures if calibrated else {}
         res = []
         for m, (q, lab) in enumerate(zip(qs, labs)):
@@ -261,6 +297,9 @@ class Glance:
                 b = out["box"][m].clamp(0, 1) * torch.tensor([W, H, W, H], dtype=torch.float32)
                 res.append(BoxResult(q.text, _r(pp), tuple(round(float(v), 1) for v in b), _r(pi), _r(pp * pi),
                                      pp >= 0.5))
+                continue
+            if isinstance(q, Boxes):
+                res.append(self._boxes_result(q, out, m, item["orig_wh"], T))
                 continue
             lg = out["label_logits"][m, lab]
             if isinstance(q, YesNo):
@@ -278,7 +317,31 @@ class Glance:
                                        keys[int(p.argmax())], _r((p * torch.arange(len(keys))).sum(), 3)))
         return res
 
-    def _forward(self, batch):
+    def _boxes_result(self, q, out, m, wh, T):
+        from .multibox import decode
+        W, H = wh
+        scale = torch.tensor([W, H, W, H], dtype=torch.float32)
+        pp = 1 / (1 + math.exp(-float(out["presence_logit"][m]) / T.get("presence", 1.0)))
+        single = [float(v) for v in out["box"][m].clamp(0, 1) * scale]
+        pi = float(torch.sigmoid(out["iou_logit"][m]))
+        cands, count_p = [], []
+        if "multi" in out:
+            mo = out["multi"]
+            ok = mo["cand_ok"][m]
+            cb = mo["cand_box"][m][ok].clamp(0, 1) * scale
+            mp = torch.sigmoid(mo["cand_match_logit"][m][ok])
+            cands = [([float(v) for v in b], float(p)) for b, p in zip(cb, mp)]
+            count_p = mo["count_logits"][m].softmax(-1).tolist()
+        mc = self.cfg.get("multibox") or {}
+        boxes, conf = decode(pp, single, pi, cands, count_p, mode=mc.get("decode", "count"),
+                             match_thr=mc.get("match_thr", 0.5), nms=mc.get("nms", 0.7))
+        labels = [str(i + 1) for i in range(len(count_p))]
+        if labels:
+            labels[-1] += "+"
+        return BoxesResult(q.text, _r(pp), [tuple(round(v, 1) for v in b) for b in boxes], [_r(c) for c in conf],
+                           {k: _r(v) for k, v in zip(labels, count_p)}, pp >= 0.5)
+
+    def _forward(self, batch, multi=False):
         dev = self.device
         b = {k: (v.to(dev) if torch.is_tensor(v) else v) for k, v in batch.items()}
         feats = []
@@ -296,12 +359,23 @@ class Glance:
             vis[b["vis_valid"]] = hp[b["p_img_mask"]]
             o = self.heads.box(h, vis, b["vis_valid"], b["centers"], b["q_img"])
             out.update({k: o[k].float().cpu() for k in ("presence_logit", "iou_logit", "box", "center_logits")})
+            if multi:
+                from .multibox import multi_forward
+                g = b["grid_thw"]
+                ghw = torch.stack([g[:, 1] // 2, g[:, 2] // 2], -1).to(hq.device)[b["q_img"]]
+                mo = multi_forward(self.heads.box, self.multibox, h, vis, b["vis_valid"], b["centers"], b["q_img"],
+                                   ghw, self.cfg["multibox"].get("k", 16))
+                out["multi"] = {k: v.float().cpu() if v.is_floating_point() else v.cpu() for k, v in mo.items()}
         return out
 
     # ----------------------------------------------------------------------------------- one-question helpers
     def box(self, image, text, **kw) -> BoxResult:
         """Locate a referring expression. Returns presence probability, pixel box and box confidence."""
         return self.ask(image, [Box(text)], **kw)[0]
+
+    def boxes(self, image, text, **kw) -> BoxesResult:
+        """Locate every instance a referring expression covers (multi-box models; see :class:`Boxes`)."""
+        return self.ask(image, [Boxes(text)], **kw)[0]
 
     def choice(self, state, question, options, **kw) -> ChoiceResult:
         return self.ask(state, [Choice(question, options)], **kw)[0]
