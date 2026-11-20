@@ -1,0 +1,42 @@
+{
+ "model": "Vision-Decision/Glance-4B-preview",
+ "version": "v1",
+ "env": {
+  "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+  "dtype": "torch.bfloat16",
+  "torch": "2.14.1+cu130",
+  "transformers": "5.22.1",
+  "fla": true
+ },
+ "results": {
+  "refcoco_val": {
+   "n": 200,
+   "acc50": 93.5,
+   "gated_acc50": 92.5
+  },
+  "grefcoco_nt": {
+   "n": 200,
+   "n_acc": 86.5
+  },
+  "grefcoco_multi": {
+   "n": 100,
+   "set_f1": 47.333333333333336,
+   "mean_pred_boxes": 0.94,
+   "multibox_heads": false
+  },
+  "screenspot_v2": {
+   "n": 100,
+   "click_acc": 91.0
+  },
+  "latency": {
+   "n_images": 30,
+   "1q_ms": 96.004386000061,
+   "8q_ms": 97.24534049996691
+  }
+ },
+ "seconds": {
+  "data": 7.7,
+  "load": 8.0,
+  "eval": 66.3
+ }
+}
