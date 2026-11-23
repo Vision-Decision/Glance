@@ -2,7 +2,8 @@
 Cell colour: blue = our model is best in the row; grey = a baseline is best. A row is coloured only when at least
 two models report it; ties at the displayed precision colour every tied cell. '—' = not reported/measured.
 A row may set "span": [0, 1] to show one value across our first two columns (e.g. two checkpoints with the same
-architecture share one speed measurement), with an optional "span_note" under the value.
+architecture share one speed measurement), with an optional "span_note" under the value; "no_win": true leaves a row
+uncoloured (differences within measurement noise).
 Usage: python bench_table.py SPEC.json OUTNAME   (writes OUTNAME-{light,dark}.{svg,png})."""
 import json, sys
 import matplotlib
@@ -64,7 +65,7 @@ def draw(spec, mode):
         if span:  # the spanned columns count once, as the first of them
             for j in range(span[0] + 1, span[1] + 1):
                 vals[j] = None
-        win = winners(vals, f, row.get("better", "high"))
+        win = set() if row.get("no_win") else winners(vals, f, row.get("better", "high"))
         if span:
             a_, b_ = span
             xa, xb = x0 + W_col * a_, x0 + W_col * (b_ + 1)

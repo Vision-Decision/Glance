@@ -234,13 +234,14 @@ With the presence gate required (P(present) ≥ 0.5), RefCOCO val is 92.0 for v1
 |  | ScreenSpot-Pro (native resolution) | 50.0§ | 39.2§ | **59.9** | — | — | — |
 |  | ScreenSpot-Pro, zoom track (2 passes) | **63.9§** | 57.0§ | — | — | — | — |
 |  | VenusBench-GD overall (official scorer) | 59.46§ | 56.48§ | — | 56.15† | **62.34†** | — |
-| Speed (ms, ↓) | 8 box questions, one image (vs 8 HF generate calls) | 86.1 | **85.6** | 3,161.2 | — | — | — |
+| Speed (ms, ↓) | 8 box questions, one image (vs 8 HF generate calls) | 86.1 | 85.6 | 3,161.2 | — | — | — |
 |  | 32 box questions, served (Glance Engine vs vLLM BF16) | 48.9 (both, same architecture) | ← shared | 334.0 | — | — | — |
 
 "—" means not measured or not reported. Bold marks the best value in a row where at least two models report one;
 ties at the shown precision are all bold. Unmarked values are our measurements; † reported elsewhere (see
 *Sources*); ‡ random 500-expression sample; § GUI resolution of the Glance columns, see *Protocol*. Glance 2.0 has
-no multi-box heads; a speed cell shared by both Glance columns is one measurement (same architecture and size).
+no multi-box heads; a speed cell shared by both Glance columns is one measurement (same architecture and size). Speed
+difference is within measurement noise (Glance 2.0 runs: 86.8 / 85.4 ms; same RTX PRO 6000 session).
 
 ### Protocol
 
