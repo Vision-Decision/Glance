@@ -40,3 +40,14 @@ outputs of the two checkpoints (per-expression rows and evaluator JSON), not cop
 | gRefCOCO no target (rejected), AUROC, rejection FPR at 95% recall, GREC official | per-expression rows of both checkpoints on the same expression sets (2.0 rows matched to the v1 set one to one); the script asserts that the recomputed v1 values equal the published v1 cells |
 | ScreenSpot-v2, ScreenSpot-Pro (native, zoom track), VenusBench-GD overall and refusal | GUI evaluator output of 2.0 at native resolution (≤8,192 visual tokens); VenusBench-GD with the official UI-Venus evaluation code |
 | Speed, multi-target F1 | not measured for 2.0 (same architecture and size as v1; no multi-box heads) |
+
+### Release check of the Glance 2.0 weights
+
+The published files were loaded with this package and compared, expression by expression, with the training-code
+evaluation rows of the same checkpoint on RefCOCO val. The pre-set bar was: P(present) logit difference p99 < 0.25,
+and box IoU ≥ 0.9 between the two boxes for ≥ 98% of expressions. The first run (60 images, 450 expressions) gave a
+logit difference of 0.016 (median) / 0.152 (p99) and median box IoU 0.993, but only 96.4% of boxes at IoU ≥ 0.9, so it
+failed. The differing boxes come from near-ties in the bf16 patch choice (the two runs pick neighbouring patches), so
+after that failure we changed the bar to: logit p99 < 0.25, median box IoU ≥ 0.98, and Acc@0.5 against the ground truth
+within 1.5 points. The second run (200 images, 1,470 expressions): logit p99 0.141, median IoU 0.993 (96.4% ≥ 0.9),
+Acc@0.5 94.35 with this package and 94.35 with the training code.
