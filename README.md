@@ -4,7 +4,7 @@
 
 [![Code license: Apache-2.0](https://img.shields.io/badge/code-Apache--2.0-blue.svg)](LICENSE)
 [![Weights license: CC BY-NC 4.0](https://img.shields.io/badge/weights-CC%20BY--NC%204.0-lightgrey.svg)](https://huggingface.co/Vision-Decision/Glance-4B-preview)
-[![Hugging Face: Glance-4B-preview](https://img.shields.io/badge/%F0%9F%A4%97%20weights-Glance--4B--preview-yellow.svg)](https://huggingface.co/Vision-Decision/Glance-4B-preview)
+[![Hugging Face: Glance 2.0](https://img.shields.io/badge/%F0%9F%A4%97%20weights-Glance%202.0-yellow.svg)](https://huggingface.co/Vision-Decision/Glance-4B-preview)
 
 [中文](README.zh-CN.md) · [Usage](#usage) · [Benchmarks](#benchmarks) · [Versions](#versions) · [Hugging Face weights](https://huggingface.co/Vision-Decision/Glance-4B-preview) · [Changelog](CHANGELOG.md)
 
@@ -54,9 +54,9 @@ list of typed questions; it returns a probability distribution per question:
 
 - **It can say "not present".** The box primitive has a presence gate trained with explicit negatives (gRefCOCO
   no-target expressions and mined hard negatives). A generative grounder has to emit coordinates or a refusal string,
-  and tends to draw a box anyway. On gRefCOCO no-target expressions Glance rejects 87.4% vs 65.0% for the base model.
+  and tends to draw a box anyway. On gRefCOCO no-target expressions Glance 2.0 rejects 85.1% vs 65.0% for the base model.
 - **Calibrated.** Probabilities come from proper-scoring-rule losses plus a per-type temperature fitted on held-out
-  training-distribution data. P(present) has 2.4% ECE and box confidence 3.8% ECE on gRefCOCO val, so a threshold
+  training-distribution data. P(present) has 3.0% ECE and box confidence 5.1% ECE on gRefCOCO val (v1: 2.4% / 3.8%), so a threshold
   on `confidence` is a usable risk knob.
 - **One pass, many questions.** The state is prefilled once. Every question is a short block that continues from
   the prefix: the Gated-DeltaNet layers start from the prefix's recurrent state, and the full-attention layers see
@@ -161,79 +161,94 @@ rs = m.ask("assets/examples/vegetables.jpg", [
   `m.ask(screenshot, qs, max_vis_tokens=2048)`.
 - `text=` adds text after an image in the same state: `m.ask(screenshot, qs, text="Task: export as PNG")`.
 - `calibrated=False` returns untempered probabilities. The temperatures from training are in
-  `glance_config.json`: presence 0.949, choice 1.046, yes/no 0.889, score 1.046 (logits are divided by T).
+  `glance_config.json`: presence 1.005, choice 0.903, yes/no 0.935, score 0.870 for Glance 2.0 (logits are divided by T).
 
 ## Benchmarks
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/benchmark-table-dark.svg">
-  <img width="100%" alt="Benchmark table: Glance-4B-preview against Qwen3.5-4B, Qwen3-VL-4B, Qwen3-VL-8B and Glance-X-4B (joint) on referring grounding, absence, multi-target, GUI grounding and speed; blue cells where Glance is best, grey where another model is best. The same values are in the table below." src="assets/benchmark-table-light.svg">
+  <img width="100%" alt="Benchmark table: Glance 2.0 against Glance v1, Qwen3.5-4B, Qwen3-VL-4B, Qwen3-VL-8B and Glance-X-4B (joint) on referring grounding, absence, multi-target, GUI grounding and speed; blue cells where Glance is best, grey where another model is best. The same values are in the table below." src="assets/benchmark-table-light.svg">
 </picture>
 
 <sub>Also as PNG ([light](assets/benchmark-table-light.png), [dark](assets/benchmark-table-dark.png)); regenerate with
 `python scripts/bench_table.py scripts/benchmark_table.json assets/benchmark-table`. Every cell's source:
 [docs/benchmark_sources.md](docs/benchmark_sources.md).</sub>
 
-Glance-4B-preview leads on rejecting absent objects (gRefCOCO no-target, VenusBench-GD refusal) and on speed, and
-it is ahead of the generative base on referring grounding. Glance-X-4B is ahead on most RefCOCO splits and on
-presence AUROC, Qwen3-VL-4B on the official GREC metric, and the base model and Qwen3-VL on GUI grounding: the
-preview saw relatively little high-resolution GUI data and reads a screenshot in a single pass without zoom.
+Glance 2.0 is ahead of v1 on every RefCOCO split (8-split mean 91.8 vs 90.8). On rejecting absent objects it ranks absent below
+present as well as v1 does: the rejection FPR at 95% recall is 9.0 vs 8.5 (difference +0.49, 95% CI [−0.15, +1.25],
+paired bootstrap over expressions), AUROC is within 0.1 on val and higher on testA/testB, and the official GREC score
+is equal on val. At the fixed 0.5 cut-off it refuses somewhat less often (85.1% vs 87.4% of gRefCOCO val no-target
+expressions); if you rely on rejection, set the threshold on `present_prob` for your own recall target. GUI numbers of the two checkpoints are at different resolutions (see the footnotes) and are not compared here. Against other
+models, Glance-X-4B leads on presence AUROC, Qwen3-VL-4B on the official GREC metric, and the generative base and
+Qwen3-VL on ScreenSpot.
 
-### Full results for Glance-4B-preview
+### Full results: Glance 2.0 and v1
 
-| Benchmark | Metric | Glance-4B-preview |
-|---|---|---|
-| RefCOCO val / testA / testB | Acc@0.5 | 93.2 / 94.5 / 90.7 |
-| RefCOCO+ val / testA / testB | Acc@0.5 | 89.7 / 93.3 / 84.6 |
-| RefCOCOg val / test | Acc@0.5 | 90.0 / 90.4 |
-| RefCOCO family, 8-split mean | Acc@0.5 | 90.8 |
-| gRefCOCO val (no-target) | N-acc | 87.4 |
-| gRefCOCO val + RefCOCO val | AUROC of P(present) | 97.9 |
-| gRefCOCO val + RefCOCO val | ECE of P(present) / of box confidence | 2.4% / 3.8% |
-| VenusBench-GD (official evaluator) | refusal / overall | 81.8 / 40.1 |
-| ScreenSpot-v2 | click accuracy | 89.4 |
-| ScreenSpot-Pro | click accuracy | 29.3 |
-| OpenDecisions (2,352 items) | capability / calibration | 67.6 / 80.4 |
-| Latency, RTX PRO 6000, batch 1 | 1 / 8 box questions per image; 1 text question | 85.5 / 85.6 / 67.3 ms |
+Both columns are scored with the same code on the same expression sets (absence rows: identical expressions, matched one to one).
+
+| Benchmark | Metric | Glance v1 | **Glance 2.0** |
+|---|---|---|---|
+| RefCOCO val / testA / testB | Acc@0.5 (standard) | 93.2 / 94.5 / 90.7 | 94.1 / 95.0 / 91.7 |
+| RefCOCO+ val / testA / testB | Acc@0.5 (standard) | 89.7 / 93.3 / 84.6 | 90.6 / 93.8 / 86.3 |
+| RefCOCOg val / test | Acc@0.5 (standard) | 90.0 / 90.4 | 91.5 / 91.2 |
+| RefCOCO family, 8-split mean | Acc@0.5 (standard) | 90.8 | 91.8 |
+| GREC val / testA / testB | official Pr@(F1=1), score threshold 0.7 | 71.6 / 47.5 / 51.3 | 71.6 / 47.3 / 51.9 |
+| gRefCOCO val, no target | rejection FPR at 95% recall (↓) | 8.5 | 9.0 |
+| gRefCOCO val / testA / testB, no target | rejected at P(present) < 0.5 | 87.4 / 80.8 / 77.1 | 85.1 / 78.7 / 76.5 |
+| gRefCOCO val / testA / testB | AUROC of P(present) | 97.9 / 94.1 / 88.7 | 97.8 / 94.5 / 89.9 |
+| ScreenSpot-v2 | click accuracy | 89.4 ¹ | 91.0 ² |
+| ScreenSpot-Pro | click accuracy, native resolution | 39.3 ¹ | 50.0 ² |
+| ScreenSpot-Pro | click accuracy, zoom track (2 passes) | 58.1 ¹ | 63.9 ² |
+| VenusBench-GD | overall / refusal (official evaluator) | 40.06 / 81.76 ¹ | 59.46 / 77.20 ² |
+
+¹ v1: GUI screenshots at ≤2,048 visual tokens (upscaling up to 2×); ScreenSpot-Pro at native resolution; zoom track on a 0.25 crop.  
+² 2.0: native resolution, ≤8,192 visual tokens, no upscaling; zoom track on a 0.4 crop (≤4,096 tokens).
+
+With the presence gate required (P(present) ≥ 0.5), RefCOCO val is 92.0 for v1 and 93.1 for 2.0, and the 8-split mean is 90.8 for 2.0.
 
 ### Comparison (same as the image)
 
-| Category | Benchmark (metric) | **Glance-4B-preview** | Qwen3.5-4B | Qwen3-VL-4B | Qwen3-VL-8B | Glance-X-4B joint |
-|---|---|---|---|---|---|---|
-| Referring grounding | RefCOCO val (Acc@0.5) | **93.2** | 91.4‡ | — | — | 93.1† |
-|  | RefCOCO testA (Acc@0.5) | 94.5 | — | — | — | **94.9†** |
-|  | RefCOCO testB (Acc@0.5) | **90.7** | — | — | — | 90.5† |
-|  | RefCOCO+ val (Acc@0.5) | **89.7** | — | — | — | 89.6† |
-|  | RefCOCO+ testA (Acc@0.5) | **93.3** | — | — | — | 93.1† |
-|  | RefCOCO+ testB (Acc@0.5) | 84.6 | — | — | — | **84.9†** |
-|  | RefCOCOg val (Acc@0.5) | 90.0 | — | — | — | **90.3†** |
-|  | RefCOCOg test (Acc@0.5) | 90.4 | — | — | — | **90.5†** |
-|  | RefCOCO / + / g mean (8 splits) | 90.8 | 88.1† | — | — | **90.9†** |
-| Absence | gRefCOCO val, no target (rejected) | **87.4** | 65.0‡ | 77.2† | — | 78.9† |
-|  | gRefCOCO testA, no target (rejected) | **80.8** | — | 70.2† | — | 71.3† |
-|  | gRefCOCO testB, no target (rejected) | **77.1** | — | 70.2† | — | 73.0† |
-|  | gRefCOCO val (AUROC of P(present)) | 97.9 | — | — | — | **98.2†** |
-|  | gRefCOCO testA (AUROC of P(present)) | 94.1 | — | — | — | **97.4†** |
-|  | gRefCOCO testB (AUROC of P(present)) | 88.7 | — | — | — | **93.5†** |
-|  | GREC val / official (Pr@(F1=1)) | 71.6 | — | **72.4†** | — | — |
-|  | GREC testA / official (Pr@(F1=1)) | 47.5 | — | **68.0†** | — | — |
-|  | GREC testB / official (Pr@(F1=1)) | 51.3 | — | **62.2†** | — | — |
-|  | VenusBench-GD refusal (official scorer) | **81.76** | — | 31.55† | 63.78† | — |
-| Multi-target | gRefCOCO val (multi-target F1) | — | — | — | — | 82.7† |
-| GUI grounding | ScreenSpot-v2 (click acc.; Glance ≤2,048 tokens, base ≤4,000) | 89.4 | **93.4** | — | 92.1† | — |
-|  | ScreenSpot-Pro (native resolution) | 39.3 | **59.9** | — | — | — |
-|  | ScreenSpot-Pro, zoom track (2 passes) | 58.1 | — | — | — | — |
-|  | VenusBench-GD overall (official scorer) | 40.06 | — | 56.15† | **62.34†** | — |
-| Speed (ms, ↓) | 8 box questions, one image (vs 8 HF generate calls) | **85.6** | 3,161.2 | — | — | — |
-|  | 32 box questions, served (Glance Engine vs vLLM BF16) | **48.9** | 334.0 | — | — | — |
+| Category | Benchmark (metric) | **Glance 2.0** | Glance v1 | Qwen3.5-4B | Qwen3-VL-4B | Qwen3-VL-8B | Glance-X-4B joint |
+|---|---|---|---|---|---|---|---|
+| Referring grounding | RefCOCO val (Acc@0.5) | **94.1** | 93.2 | 91.4‡ | — | — | 93.1† |
+|  | RefCOCO testA (Acc@0.5) | **95.0** | 94.5 | — | — | — | 94.9† |
+|  | RefCOCO testB (Acc@0.5) | **91.7** | 90.7 | — | — | — | 90.5† |
+|  | RefCOCO+ val (Acc@0.5) | **90.6** | 89.7 | — | — | — | 89.6† |
+|  | RefCOCO+ testA (Acc@0.5) | **93.8** | 93.3 | — | — | — | 93.1† |
+|  | RefCOCO+ testB (Acc@0.5) | **86.3** | 84.6 | — | — | — | 84.9† |
+|  | RefCOCOg val (Acc@0.5) | **91.5** | 90.0 | — | — | — | 90.3† |
+|  | RefCOCOg test (Acc@0.5) | **91.2** | 90.4 | — | — | — | 90.5† |
+|  | RefCOCO / + / g mean (8 splits) | **91.8** | 90.8 | 88.1† | — | — | 90.9† |
+| Absence | gRefCOCO val, no target (rejected) | 85.1 | **87.4** | 65.0‡ | 77.2† | — | 78.9† |
+|  | gRefCOCO testA, no target (rejected) | 78.7 | **80.8** | — | 70.2† | — | 71.3† |
+|  | gRefCOCO testB, no target (rejected) | 76.5 | **77.1** | — | 70.2† | — | 73.0† |
+|  | gRefCOCO val (AUROC of P(present)) | 97.8 | 97.9 | — | — | — | **98.2†** |
+|  | gRefCOCO testA (AUROC of P(present)) | 94.5 | 94.1 | — | — | — | **97.4†** |
+|  | gRefCOCO testB (AUROC of P(present)) | 89.9 | 88.7 | — | — | — | **93.5†** |
+|  | gRefCOCO val (rejection FPR at 95% recall (↓)) | 9.0 | **8.5** | — | — | — | — |
+|  | GREC val / official (Pr@(F1=1)) | 71.6 | 71.6 | — | **72.4†** | — | — |
+|  | GREC testA / official (Pr@(F1=1)) | 47.3 | 47.5 | — | **68.0†** | — | — |
+|  | GREC testB / official (Pr@(F1=1)) | 51.9 | 51.3 | — | **62.2†** | — | — |
+|  | VenusBench-GD refusal (official scorer) | 77.20§ | **81.76** | — | 31.55† | 63.78† | — |
+| Multi-target | gRefCOCO val (multi-target F1) | — | — | — | — | — | 82.7† |
+| GUI grounding | ScreenSpot-v2 (click acc.; v1 ≤2,048 tokens, 2.0 native, base ≤4,000) | 91.0§ | 89.4 | **93.4** | — | 92.1† | — |
+|  | ScreenSpot-Pro (native resolution) | 50.0§ | 39.3 | **59.9** | — | — | — |
+|  | ScreenSpot-Pro, zoom track (2 passes) | **63.9§** | 58.1 | — | — | — | — |
+|  | VenusBench-GD overall (official scorer) | 59.46§ | 40.06 | — | 56.15† | **62.34†** | — |
+| Speed (ms, ↓) | 8 box questions, one image (vs 8 HF generate calls) | 85.6 (both, same architecture) | ← shared | 3,161.2 | — | — | — |
+|  | 32 box questions, served (Glance Engine vs vLLM BF16) | 48.9 (both, same architecture) | ← shared | 334.0 | — | — | — |
 
 "—" means not measured or not reported. Bold marks the best value in a row where at least two models report one;
 ties at the shown precision are all bold. Unmarked values are our measurements; † reported elsewhere (see
-*Sources*); ‡ random 500-expression sample.
+*Sources*); ‡ random 500-expression sample; § GUI resolution of the Glance columns, see *Protocol*. Glance 2.0 has
+no multi-box heads; a speed cell shared by both Glance columns is one measurement (same architecture and size).
 
 ### Protocol
 
-- **Glance numbers** come from one evaluation run of the released checkpoint (step 3,844) on an RTX PRO 6000
+- **Glance 2.0 numbers** come from one evaluation run of the released checkpoint (step 3,000) on an A100 80GB in bf16
+  with the `fla` kernels: natural images at ≤640 visual tokens, GUI screenshots at native resolution (≤8,192 visual
+  tokens, no upscaling), ScreenSpot-Pro zoom track on a 0.4 crop (≤4,096 tokens). Single pass unless noted.
+- **Glance v1 numbers** come from one evaluation run of the v1 checkpoint (step 3,844) on an RTX PRO 6000
   Blackwell in bf16 with the `fla` kernels. Every number is single-pass: no zoom, no test-time augmentation, no
   second look. Natural images are resized to ≤640 visual tokens (COCO 640×480 → 29×22 patches); GUI screenshots to
   ≤2,048 visual tokens (upscaling up to 2× allowed). In the comparison, ScreenSpot-Pro is read at native resolution
@@ -242,12 +257,20 @@ ties at the shown precision are all bold. Unmarked values are our measurements; 
 - **REC metric.** Acc@0.5 is the fraction of expressions whose decoded box reaches IoU ≥ 0.5 with the ground truth,
   ignoring the presence gate (standard REC). With the gate required (P(present) ≥ 0.5), RefCOCO val drops from 93.2
   to 92.0.
+- **GREC metric.** Port of the official gRefCOCO evaluator: the predicted box is kept when its score P(present) ≥ 0.7,
+  a prediction matches at GIoU ≥ 0.5, and an expression counts when F1 = 1 (a no-target expression counts when nothing
+  is kept). Each split is the gRefCOCO split joined with the RefCOCO-unc expressions of the same images (val 25,063 /
+  testA 19,200 / testB 16,063 expressions), the same for both Glance columns.
+- **Rejection FPR at 95% recall.** On gRefCOCO val (8,905 no-target expressions): the P(present) threshold is set so
+  that 95% of present targets are accepted, and the FPR is the share of no-target expressions accepted at that
+  threshold. It does not depend on the 0.5 cut-off, so it compares how well two models rank absent below present.
 - **GUI metric.** Click accuracy: the center of the predicted box lies inside the ground-truth box.
 - **Calibration.** 15 equal-width bins. Temperatures were fitted on held-out splits of the training distribution,
   never on an evaluation set.
-- **Decontamination.** Every image that appears in any RefCOCO/+/g or gRefCOCO evaluation split was removed from
-  training (RefCOCOg-umd train overlaps RefCOCO-unc val/test images), and evaluation images of the other benchmarks
-  were removed by perceptual hash.
+- **Decontamination** (both checkpoints). Every image that appears in any RefCOCO/+/g or gRefCOCO evaluation split
+  was removed from training (RefCOCOg-umd train overlaps RefCOCO-unc val/test images), and evaluation images of the
+  other benchmarks were removed by perceptual hash. For 2.0 the excluded list also covers COCO val2017 and our probe
+  images, and the final training file was checked against the evaluation splits: {DECON}.
 - **External numbers** are copied from the cited primary sources. Their prompts, resolutions and modes differ from
   ours (some report thinking mode, some use their own reproductions), so treat cross-column comparisons as
   indicative.
@@ -278,12 +301,15 @@ Cell by cell: [benchmark_sources.md](docs/benchmark_sources.md).
 
 ## Versions
 
-Every checkpoint is a separate Hugging Face repository and loads with `Glance.from_pretrained(repo)`. Each card
+Every checkpoint loads with `Glance.from_pretrained(repo)`. Glance 2.0 is the main branch of
+`Vision-Decision/Glance-4B-preview`; the original v1 stays in the same repository under the tag `v1`
+(`Glance.from_pretrained("Vision-Decision/Glance-4B-preview", revision="v1")`). The other versions are separate repositories. Each card
 lists what changed, the full results against that version's pre-registered bars, and its known regressions.
 
 | Version | Weights | Built from | Summary | Use it for |
 |---|---|---|---|---|
-| v1 | [Glance-4B-preview](https://huggingface.co/Vision-Decision/Glance-4B-preview) | Qwen3.5-4B | first public release; every number above | the reference preview |
+| **2.0** | [Glance-4B-preview](https://huggingface.co/Vision-Decision/Glance-4B-preview) (main) | Qwen3.5-4B | Glance 2.0: trained from the base for 3,000 steps on the v1.4 mixture; RefCOCO 8-split 91.8, RefCOCO+ testB 86.3; rejection at 95% recall level with v1 | **default** |
+| v1 | [Glance-4B-preview](https://huggingface.co/Vision-Decision/Glance-4B-preview) at `revision="v1"` | Qwen3.5-4B | first public release (step 3,844); the v1 column above | the reference preview |
 | v1.1 | [Glance-4B-v1.1](https://huggingface.co/Vision-Decision/Glance-4B-v1.1) | Qwen3.5-4B | v1 recipe plus high-resolution GUI data; RefCOCO 8-split 92.8, but many false "not present" on function, generic and relational wording | reproducing v1.1 |
 | v1.2 | [Glance-4B-v1.2](https://huggingface.co/Vision-Decision/Glance-4B-v1.2) | v1.1 | fixes the description-shift failures (false "not present" 37–51% → 1–4%); RefCOCO 8-split drops to 91.4 | reproducing v1.2 |
 | v1.2b | [Glance-4B-v1.2b](https://huggingface.co/Vision-Decision/Glance-4B-v1.2b) | v1.2 | adds multi-box heads (gRefCOCO multi-target set F1 79.7) | reproducing v1.2b |
@@ -330,10 +356,11 @@ base model, about 400 COCO images and 100 screenshots).
 
 ## Limitations
 
-- **Preview.** One epoch on ~212k states / 520k questions. Expect rough edges outside the training mix.
-- **GUI grounding is not competitive yet**, especially on high-resolution professional software (ScreenSpot-Pro
-  29.3). Use a GUI specialist if you need click accuracy; Glance's GUI strength today is state checks and refusal.
-- **One box per expression.** The preview's box head returns one box; for multi-target expressions it reports presence
+- **3,000 steps.** Glance 2.0 is trained for 3,000 steps from the base model (about 43% of the v1.4 mixture's records). Expect rough edges outside the training mix.
+- **GUI grounding is behind GUI specialists**, especially on high-resolution professional software (ScreenSpot-Pro
+  50.0 at native resolution, 63.9 with the zoom track, against 59.9 for the generative base). Use a GUI specialist if
+  you need click accuracy.
+- **One box per expression.** The box head of Glance 2.0 (and v1) returns one box; for multi-target expressions it reports presence
   and the most likely instance. Use [Glance-4B-v1.3b](https://huggingface.co/Vision-Decision/Glance-4B-v1.3b) and
   `Boxes` questions for multiple instances.
 - **Calibration is measured in distribution.** Temperatures were fitted on held-out training-distribution data. On
@@ -356,7 +383,7 @@ base model, about 400 COCO images and 100 screenshots).
 ## License
 
 - **Code** in this repository: [Apache-2.0](LICENSE).
-- **Weights** (`Vision-Decision/Glance-4B-preview`, the LoRA adapter and heads): **CC BY-NC 4.0**, non-commercial. The
+- **Weights** (`Vision-Decision/Glance-4B-preview`: Glance 2.0 and, under the tag `v1`, the original preview; the LoRA adapter and heads): **CC BY-NC 4.0**, non-commercial. The
   training data includes gRefCOCO (non-commercial) and some text sources whose licenses we could not confirm.
 - **Public models and datasets** on Hugging Face, each with its own licence: [docs/DATA.md](docs/DATA.md).
 - **Base model** [Qwen/Qwen3.5-4B](https://huggingface.co/Qwen/Qwen3.5-4B): Apache-2.0, downloaded from its own
@@ -376,7 +403,7 @@ A paper is in preparation. Until then:
   author = {Vision-Decision},
   year   = {2026},
   url    = {https://github.com/Vision-Decision/Glance},
-  note   = {Glance-4B-preview, https://huggingface.co/Vision-Decision/Glance-4B-preview}
+  note   = {Glance 2.0, https://huggingface.co/Vision-Decision/Glance-4B-preview}
 }
 ```
 

@@ -28,3 +28,15 @@ Glance cell is that checkpoint. Paths are in [Vision-Decision/glance-core](https
 
 † reported by others, with their own prompts and resolutions. Cells are coloured by comparing the values as shown
 (one decimal, two for VenusBench-GD); ties colour every tied cell.
+
+## Glance 2.0 column (2026-11-24)
+
+Every Glance 2.0 cell and the re-checked Glance v1 absence cells are produced by one script from the raw evaluation
+outputs of the two checkpoints (per-expression rows and evaluator JSON), not copied by hand:
+
+| Rows | Source |
+|---|---|
+| RefCOCO / + / g, 8 splits and mean | `acc50` of each split (presence gate ignored); gated values in the README note |
+| gRefCOCO no target (rejected), AUROC, rejection FPR at 95% recall, GREC official | per-expression rows of both checkpoints on the same expression sets (2.0 rows matched to the v1 set one to one); the script asserts that the recomputed v1 values equal the published v1 cells |
+| ScreenSpot-v2, ScreenSpot-Pro (native, zoom track), VenusBench-GD overall and refusal | GUI evaluator output of 2.0 at native resolution (≤8,192 visual tokens); VenusBench-GD with the official UI-Venus evaluation code |
+| Speed, multi-target F1 | not measured for 2.0 (same architecture and size as v1; no multi-box heads) |

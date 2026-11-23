@@ -1,6 +1,8 @@
 """Launch-style benchmark table (rows grouped by category, our model first and outlined in blue).
 Cell colour: blue = our model is best in the row; grey = a baseline is best. A row is coloured only when at least
 two models report it; ties at the displayed precision colour every tied cell. '—' = not reported/measured.
+A row may set "span": [0, 1] to show one value across our first two columns (e.g. two checkpoints with the same
+architecture share one speed measurement), with an optional "span_note" under the value.
 Usage: python bench_table.py SPEC.json OUTNAME   (writes OUTNAME-{light,dark}.{svg,png})."""
 import json, sys
 import matplotlib
@@ -57,8 +59,27 @@ def draw(spec, mode):
             ax.text(0.05, y + 0.12, cat, va="top", fontsize=10.5, color=t["ink2"], linespacing=1.2)
         prev_cat = cat or prev_cat
         f = row.get("fmt", "{:.1f}")
-        win = winners(row["vals"], f, row.get("better", "high"))
+        span = row.get("span")
+        vals = list(row["vals"])
+        if span:  # the spanned columns count once, as the first of them
+            for j in range(span[0] + 1, span[1] + 1):
+                vals[j] = None
+        win = winners(vals, f, row.get("better", "high"))
+        if span:
+            a_, b_ = span
+            xa, xb = x0 + W_col * a_, x0 + W_col * (b_ + 1)
+            if a_ in win:
+                ax.add_patch(Rectangle((xa, y), xb - xa, rh, fc=t["ours_fill"] if a_ == 0 else t["other_fill"], ec="none", zorder=0))
+            s = fmt(row["vals"][a_], f)
+            dy = 0.07 if row.get("span_note") else 0
+            ax.text((xa + xb) / 2, y + rh / 2 - dy, s, va="center", ha="center", fontsize=11.5,
+                    weight="bold" if a_ in win else "normal", color=t["ink"])
+            if row.get("span_note"):
+                ax.text((xa + xb) / 2, y + rh / 2 + 0.13, row["span_note"], va="center", ha="center", fontsize=8,
+                        color=t["ink2"])
         for j, v in enumerate(row["vals"]):
+            if span and span[0] <= j <= span[1]:
+                continue
             if j in win:
                 ax.add_patch(Rectangle((x0 + W_col * j, y), W_col, rh, fc=t["ours_fill"] if j == 0 else t["other_fill"],
                                        ec="none", zorder=0))
@@ -75,7 +96,20 @@ def draw(spec, mode):
                     linespacing=1.1)
         y += rh
     ax.plot([0, W], [y, y], color=t["strong"], lw=1.0)
-    ax.add_patch(Rectangle((x0, 0.04), W_col, y - 0.04, fc="none", ec=t["ours_edge"], lw=2.0, zorder=5))
+    # outline of our column; on rows that span into the next column, the right edge goes around the merged cell
+    yy, edge = hh, [(0.04, hh, x0 + W_col)]
+    for row in rows:
+        sp = row.get("span")
+        edge.append((yy, yy + rh, x0 + W_col * (sp[1] + 1 if sp and sp[0] == 0 else 1)))
+        yy += rh
+    kw = dict(color=t["ours_edge"], lw=2.0, zorder=5, solid_capstyle="projecting")
+    ax.plot([x0, x0], [0.04, y], **kw)
+    ax.plot([x0, x0 + W_col], [0.04, 0.04], **kw)
+    for k, (ya, yb, xr) in enumerate(edge):
+        ax.plot([xr, xr], [ya, yb], **kw)
+        if k + 1 < len(edge) and edge[k + 1][2] != xr:
+            ax.plot([xr, edge[k + 1][2]], [yb, yb], **kw)
+    ax.plot([x0, edge[-1][2]], [y, y], **kw)
     for k, line in enumerate(spec["footer"]):
         ax.text(0.0, y + 0.3 + 0.22 * k, line, va="center", fontsize=8.3, color=t["ink2"])
     return fig
