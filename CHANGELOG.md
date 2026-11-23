@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.3.0: Glance 2.0 (2026-11-24)
+
+- **Glance 2.0 weights** replace the original preview on the main branch of
+  [Vision-Decision/Glance-4B-preview](https://huggingface.co/Vision-Decision/Glance-4B-preview) (repository name
+  unchanged; the original v1 is kept under the tag `v1`, load it with `revision="v1"`). Glance 2.0 is Qwen3.5-4B plus a
+  LoRA adapter and heads trained from the base model for 3,000 steps on the v1.4 data mixture.
+- Against v1: RefCOCO 8-split mean 91.8 (v1 90.8), every split higher. Rejection of absent objects ranks the same as
+  v1 (FPR at 95% recall 9.0 vs 8.5, difference within noise; official GREC val 71.6 for both), but at the default 0.5
+  cut-off 2.0 rejects 85.1% of gRefCOCO val no-target expressions against 87.4% for v1. On GUI grounding, with both checkpoints read at native resolution, 2.0 reaches 91.0 on ScreenSpot-v2 (v1 88.4), 50.0 on ScreenSpot-Pro (v1 39.2; zoom track 63.9 vs 57.0) and 59.5 on VenusBench-GD overall (v1 56.5).
+- Benchmark table regenerated from the raw evaluation outputs (`scripts/benchmark_table.json`, rendered by
+  `scripts/bench_table.py`, which can now merge cells across the two Glance columns), with Glance v1 as a column and a
+  new row for the rejection FPR at 95% recall.
+
 ## 0.2.0 (2026-11-20)
 
 - Earlier checkpoints published as their own Hugging Face repos: Glance-4B-v1.1, -v1.2, -v1.2b, -v1.3 and -v1.3b,
