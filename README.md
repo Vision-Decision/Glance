@@ -287,8 +287,7 @@ Cell by cell: [benchmark_sources.md](docs/benchmark_sources.md).
   generative models depend strongly on prompt and refusal format.
 - UI-Venus-1.5, [arXiv:2602.09082](https://arxiv.org/abs/2602.09082), Table 1: Qwen3-VL-8B on ScreenSpot-v2 (that
   report's reproduction).
-- Glance-X-4B: [Glanece-Training docs/RESULTS.md](https://github.com/Vision-Decision/Glanece-Training/blob/main/docs/RESULTS.md),
-  joint direction (K=8, step 6,100).
+- Glance-X-4B: Glance-X-4B joint run (internal results, private repository), joint direction (K=8, step 6,100).
 - Our base-model runs: generative Qwen3.5-4B, bf16, greedy, thinking off, HF `generate`, same GPU. RefCOCO val and
   gRefCOCO no-target on random 500-expression subsets; ScreenSpot-v2 on all 1,272 items at ≤4,000 visual tokens;
   ScreenSpot-Pro on all 1,581 items at native resolution; latency: 8 questions about one image as 8 sequential
