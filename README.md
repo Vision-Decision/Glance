@@ -32,7 +32,7 @@ from glance import Glance
 
 m = Glance.from_pretrained("Vision-Decision/Glance-4B-preview")   # picks cuda, then mps, then cpu
 r = m.box("assets/examples/park_bench.jpg", "the clear umbrella")
-print(r.present_prob, r.box, r.confidence)                 # 0.996 (189.2, 9.3, 373.6, 164.8) 0.8233
+print(r.present_prob, r.box, r.confidence)                 # 0.995 (191, 5, 372, 166) 0.915
 ```
 
 The first call downloads the Qwen3.5-4B base weights (~9 GB) and the Glance adapter and heads (~537 MB).
@@ -89,8 +89,8 @@ device is not CUDA. Pass `dtype=torch.bfloat16` to `from_pretrained` to halve me
 
 ## Usage
 
-All outputs below are real, from `python examples/quickstart.py` on an Apple-silicon Mac (MPS, fp32). On CUDA in
-bf16 the numbers differ in the third decimal.
+All outputs below are real, from `python examples/quickstart.py` with Glance 2.0 on CUDA (RTX PRO 6000, bf16). On MPS
+or CPU in fp32 the numbers differ in the third decimal.
 
 ```python
 from glance import Glance, Box, Choice, YesNo, Score
@@ -99,15 +99,15 @@ m = Glance.from_pretrained("Vision-Decision/Glance-4B-preview")
 park = "assets/examples/park_bench.jpg"
 
 m.box(park, "the clear umbrella")
-# BoxResult('the clear umbrella', present_prob=0.996, box=[189, 9, 374, 165], confidence=0.823)
+# BoxResult('the clear umbrella', present_prob=0.995, box=[191, 5, 372, 166], confidence=0.915)
 m.box(park, "a red bicycle")                     # not in the image
-# BoxResult('a red bicycle', present_prob=0.000, box=[5, 171, 236, 363], confidence=0.000)
+# BoxResult('a red bicycle', present_prob=0.000, box=[465, 213, 583, 265], confidence=0.000)
 m.choice(park, "Where are they?", ["park", "beach", "office", "train station"])
-# ChoiceResult(answer='park', probs={'park': 0.994, 'beach': 0.004, 'office': 0.001, 'train station': 0.002})
+# ChoiceResult(answer='park', probs={'park': 0.989, 'beach': 0.005, 'office': 0.003, 'train station': 0.003})
 m.yesno(park, "Is it raining?")
-# YesNoResult(p_yes=0.033)
+# YesNoResult(p_yes=0.136)
 m.yesno("assets/examples/editor.png", "Is a save dialog open?")
-# YesNoResult(p_yes=0.992)
+# YesNoResult(p_yes=0.998)
 ```
 
 Text works the same way; pass a string as the state. Options can be a list or a `label -> description` dict.
@@ -118,9 +118,9 @@ ticket = ("I was charged twice for my March invoice and the second payment is st
 m.choice(ticket, "Which team should handle this ticket?",
          {"billing": "payments, invoices, refunds", "technical": "bugs, errors, outages",
           "sales": "pricing, upgrades, new plans"})
-# ChoiceResult(answer='billing', probs={'billing': 0.999, 'technical': 0.000, 'sales': 0.000})
+# ChoiceResult(answer='billing', probs={'billing': 0.987, 'technical': 0.008, 'sales': 0.005})
 m.score(ticket, "How urgent is this ticket?", levels=["low", "medium", "high", "critical"])
-# ScoreResult(answer='high', expected=1.67, probs={'low': 0.048, 'medium': 0.371, 'high': 0.446, 'critical': 0.135})
+# ScoreResult(answer='high', expected=1.62, probs={'low': 0.045, 'medium': 0.373, 'high': 0.502, 'critical': 0.080})
 ```
 
 `ask` answers many typed questions in **one** shared-prefix pass. Plain strings are box questions.
@@ -132,14 +132,14 @@ rs = m.ask("assets/examples/vegetables.jpg", [
     Choice("What is the main food group?", ["vegetables", "meat", "dairy", "grains"]),
     Score("How healthy is this food?", ["unhealthy", "neutral", "healthy", "very healthy"]),
 ])
-# BoxResult('the broccoli', present_prob=0.999, box=[267, 7, 566, 247], confidence=0.821)
-# BoxResult('the tomatoes', present_prob=0.999, box=[88, 201, 253, 348], confidence=0.832)
-# BoxResult('the carrots', present_prob=1.000, box=[172, 223, 458, 426], confidence=0.776)
-# BoxResult('a banana', present_prob=0.009, box=[208, 223, 408, 376], confidence=0.003)
-# BoxResult('a knife', present_prob=0.000, box=[5, 198, 81, 357], confidence=0.000)
-# YesNoResult(p_yes=0.003)
-# ChoiceResult(answer='vegetables', probs={'vegetables': 0.996, 'meat': 0.003, 'dairy': 0.001, 'grains': 0.001})
-# ScoreResult(answer='very healthy', expected=2.66, probs={'unhealthy': 0.006, 'neutral': 0.021, 'healthy': 0.278, 'very healthy': 0.695})
+# BoxResult('the broccoli', present_prob=0.997, box=[282, 6, 570, 296], confidence=0.969)
+# BoxResult('the tomatoes', present_prob=0.998, box=[97, 202, 208, 315], confidence=0.785)
+# BoxResult('the carrots', present_prob=0.998, box=[226, 280, 402, 408], confidence=0.404)
+# BoxResult('a banana', present_prob=0.001, box=[156, 89, 287, 174], confidence=0.001)
+# BoxResult('a knife', present_prob=0.000, box=[205, 148, 343, 259], confidence=0.000)
+# YesNoResult(p_yes=0.062)
+# ChoiceResult(answer='vegetables', probs={'vegetables': 0.985, 'meat': 0.006, 'dairy': 0.004, 'grains': 0.004})
+# ScoreResult(answer='very healthy', expected=2.71, probs={'unhealthy': 0.005, 'neutral': 0.013, 'healthy': 0.250, 'very healthy': 0.732})
 ```
 
 ![Predicted boxes on the vegetables example, with the two absent targets listed with their P(present)](assets/example_boxes.png)
@@ -178,7 +178,7 @@ Glance 2.0 is ahead of v1 on every RefCOCO split (8-split mean 91.8 vs 90.8). On
 present as well as v1 does: the rejection FPR at 95% recall is 9.0 vs 8.5 (difference +0.49, 95% CI [−0.15, +1.25],
 paired bootstrap over expressions), AUROC is within 0.1 on val and higher on testA/testB, and the official GREC score
 is equal on val. At the fixed 0.5 cut-off it refuses somewhat less often (85.1% vs 87.4% of gRefCOCO val no-target
-expressions); if you rely on rejection, set the threshold on `present_prob` for your own recall target. GUI numbers of the two checkpoints are at different resolutions (see the footnotes) and are not compared here. Against other
+expressions); if you rely on rejection, set the threshold on `present_prob` for your own recall target. On GUI grounding, with both checkpoints read at native resolution, 2.0 reaches 91.0 on ScreenSpot-v2 (v1 88.4), 50.0 on ScreenSpot-Pro (v1 39.2; zoom track 63.9 vs 57.0) and 59.5 on VenusBench-GD overall (v1 56.5). Against other
 models, Glance-X-4B leads on presence AUROC, Qwen3-VL-4B on the official GREC metric, and the generative base and
 Qwen3-VL on ScreenSpot.
 
@@ -196,13 +196,12 @@ Both columns are scored with the same code on the same expression sets (absence 
 | gRefCOCO val, no target | rejection FPR at 95% recall (↓) | 8.5 | 9.0 |
 | gRefCOCO val / testA / testB, no target | rejected at P(present) < 0.5 | 87.4 / 80.8 / 77.1 | 85.1 / 78.7 / 76.5 |
 | gRefCOCO val / testA / testB | AUROC of P(present) | 97.9 / 94.1 / 88.7 | 97.8 / 94.5 / 89.9 |
-| ScreenSpot-v2 | click accuracy | 89.4 ¹ | 91.0 ² |
-| ScreenSpot-Pro | click accuracy, native resolution | 39.3 ¹ | 50.0 ² |
-| ScreenSpot-Pro | click accuracy, zoom track (2 passes) | 58.1 ¹ | 63.9 ² |
-| VenusBench-GD | overall / refusal (official evaluator) | 40.06 / 81.76 ¹ | 59.46 / 77.20 ² |
+| ScreenSpot-v2 | click accuracy ² | 88.4 | 91.0 |
+| ScreenSpot-Pro | click accuracy, native resolution ² | 39.2 | 50.0 |
+| ScreenSpot-Pro | click accuracy, zoom track (2 passes) ² | 57.0 | 63.9 |
+| VenusBench-GD | overall / refusal (official evaluator) ² | 56.48 / 79.87 | 59.46 / 77.20 |
 
-¹ v1: GUI screenshots at ≤2,048 visual tokens (upscaling up to 2×); ScreenSpot-Pro at native resolution; zoom track on a 0.25 crop.  
-² 2.0: native resolution, ≤8,192 visual tokens, no upscaling; zoom track on a 0.4 crop (≤4,096 tokens).
+² Both columns: native resolution, ≤8,192 visual tokens, no upscaling; zoom track on a 0.4 crop (≤4,096 tokens).
 
 With the presence gate required (P(present) ≥ 0.5), RefCOCO val is 92.0 for v1 and 93.1 for 2.0, and the 8-split mean is 90.8 for 2.0.
 
@@ -229,13 +228,13 @@ With the presence gate required (P(present) ≥ 0.5), RefCOCO val is 92.0 for v1
 |  | GREC val / official (Pr@(F1=1)) | 71.6 | 71.6 | — | **72.4†** | — | — |
 |  | GREC testA / official (Pr@(F1=1)) | 47.3 | 47.5 | — | **68.0†** | — | — |
 |  | GREC testB / official (Pr@(F1=1)) | 51.9 | 51.3 | — | **62.2†** | — | — |
-|  | VenusBench-GD refusal (official scorer) | 77.20§ | **81.76** | — | 31.55† | 63.78† | — |
+|  | VenusBench-GD refusal (official scorer) | 77.20§ | **79.87§** | — | 31.55† | 63.78† | — |
 | Multi-target | gRefCOCO val (multi-target F1) | — | — | — | — | — | 82.7† |
-| GUI grounding | ScreenSpot-v2 (click acc.; v1 ≤2,048 tokens, 2.0 native, base ≤4,000) | 91.0§ | 89.4 | **93.4** | — | 92.1† | — |
-|  | ScreenSpot-Pro (native resolution) | 50.0§ | 39.3 | **59.9** | — | — | — |
-|  | ScreenSpot-Pro, zoom track (2 passes) | **63.9§** | 58.1 | — | — | — | — |
-|  | VenusBench-GD overall (official scorer) | 59.46§ | 40.06 | — | 56.15† | **62.34†** | — |
-| Speed (ms, ↓) | 8 box questions, one image (vs 8 HF generate calls) | 85.6 (both, same architecture) | ← shared | 3,161.2 | — | — | — |
+| GUI grounding | ScreenSpot-v2 (click acc.; Glance native, base ≤4,000) | 91.0§ | 88.4§ | **93.4** | — | 92.1† | — |
+|  | ScreenSpot-Pro (native resolution) | 50.0§ | 39.2§ | **59.9** | — | — | — |
+|  | ScreenSpot-Pro, zoom track (2 passes) | **63.9§** | 57.0§ | — | — | — | — |
+|  | VenusBench-GD overall (official scorer) | 59.46§ | 56.48§ | — | 56.15† | **62.34†** | — |
+| Speed (ms, ↓) | 8 box questions, one image (vs 8 HF generate calls) | 86.1 | **85.6** | 3,161.2 | — | — | — |
 |  | 32 box questions, served (Glance Engine vs vLLM BF16) | 48.9 (both, same architecture) | ← shared | 334.0 | — | — | — |
 
 "—" means not measured or not reported. Bold marks the best value in a row where at least two models report one;
@@ -270,7 +269,7 @@ no multi-box heads; a speed cell shared by both Glance columns is one measuremen
 - **Decontamination** (both checkpoints). Every image that appears in any RefCOCO/+/g or gRefCOCO evaluation split
   was removed from training (RefCOCOg-umd train overlaps RefCOCO-unc val/test images), and evaluation images of the
   other benchmarks were removed by perceptual hash. For 2.0 the excluded list also covers COCO val2017 and our probe
-  images, and the final training file was checked against the evaluation splits: {DECON}.
+  images, and the final training file was checked against the evaluation splits: zero overlapping images (74,932 COCO images in 443,460 training records against 6,549 images of the 12 evaluation splits).
 - **External numbers** are copied from the cited primary sources. Their prompts, resolutions and modes differ from
   ours (some report thinking mode, some use their own reproductions), so treat cross-column comparisons as
   indicative.

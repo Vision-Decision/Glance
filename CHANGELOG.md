@@ -8,7 +8,7 @@
   LoRA adapter and heads trained from the base model for 3,000 steps on the v1.4 data mixture.
 - Against v1: RefCOCO 8-split mean 91.8 (v1 90.8), every split higher. Rejection of absent objects ranks the same as
   v1 (FPR at 95% recall 9.0 vs 8.5, difference within noise; official GREC val 71.6 for both), but at the default 0.5
-  cut-off 2.0 rejects 85.1% of gRefCOCO val no-target expressions against 87.4% for v1. GUI numbers of the two checkpoints are at different resolutions (see the footnotes) and are not compared here.
+  cut-off 2.0 rejects 85.1% of gRefCOCO val no-target expressions against 87.4% for v1. On GUI grounding, with both checkpoints read at native resolution, 2.0 reaches 91.0 on ScreenSpot-v2 (v1 88.4), 50.0 on ScreenSpot-Pro (v1 39.2; zoom track 63.9 vs 57.0) and 59.5 on VenusBench-GD overall (v1 56.5).
 - Benchmark table regenerated from the raw evaluation outputs (`scripts/benchmark_table.json`, rendered by
   `scripts/bench_table.py`, which can now merge cells across the two Glance columns), with Glance v1 as a column and a
   new row for the rejection FPR at 95% recall.

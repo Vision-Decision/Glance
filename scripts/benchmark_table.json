@@ -414,7 +414,7 @@
    "note": "official scorer",
    "vals": [
     77.19688542825361,
-    81.76,
+    79.86651835372636,
     null,
     31.55,
     63.78,
@@ -423,7 +423,7 @@
    "fmt": "{:.2f}",
    "marks": [
     "§",
-    "",
+    "§",
     "",
     "†",
     "†",
@@ -454,10 +454,10 @@
   {
    "cat": "GUI\ngrounding",
    "bench": "ScreenSpot-v2",
-   "note": "click acc.; v1 ≤2,048 tokens,\n2.0 native, base ≤4,000",
+   "note": "click acc.; Glance native,\nbase ≤4,000",
    "vals": [
     91.0377358490566,
-    89.39,
+    88.44339622641509,
     93.4,
     null,
     92.1,
@@ -465,7 +465,7 @@
    ],
    "marks": [
     "§",
-    "",
+    "§",
     "",
     "",
     "†",
@@ -478,7 +478,7 @@
    "note": "native resolution",
    "vals": [
     49.968374446552815,
-    39.34,
+    39.15243516761544,
     59.9,
     null,
     null,
@@ -486,7 +486,7 @@
    ],
    "marks": [
     "§",
-    "",
+    "§",
     "",
     "",
     "",
@@ -499,7 +499,7 @@
    "note": "2 passes",
    "vals": [
     63.946869070208734,
-    58.13,
+    56.98924731182796,
     null,
     null,
     null,
@@ -507,7 +507,7 @@
    ],
    "marks": [
     "§",
-    "",
+    "§",
     "",
     "",
     "",
@@ -520,7 +520,7 @@
    "note": "official scorer",
    "vals": [
     59.4647201946472,
-    40.06,
+    56.480129764801305,
     null,
     56.15,
     62.34,
@@ -529,7 +529,7 @@
    "fmt": "{:.2f}",
    "marks": [
     "§",
-    "",
+    "§",
     "",
     "†",
     "†",
@@ -541,7 +541,7 @@
    "bench": "8 box questions, one image",
    "note": "vs 8 HF generate\ncalls",
    "vals": [
-    85.6,
+    86.1,
     85.6,
     3161.2,
     null,
@@ -557,12 +557,7 @@
     "",
     "",
     ""
-   ],
-   "span": [
-    0,
-    1
-   ],
-   "span_note": "same architecture, one measurement"
+   ]
   },
   {
    "cat": "Speed (ms, ↓)",
@@ -597,7 +592,7 @@
   "Glance 2.0 = Qwen3.5-4B + LoRA trained from the base for 3,000 steps (v1.4 data). Glance v1 = the original preview (step 3,844). Unmarked cells:",
   "measured by us, single pass unless noted. Blue: Glance 2.0 best in the row; grey: another model is best; ties colour every tied cell. GREC: official protocol",
   "(score threshold 0.7). Rejected: share of no-target expressions refused at P(present) < 0.5. 2.0 and v1 absence rows are on identical expression sets.",
-  "§ 2.0 GUI: native resolution (≤8,192 visual tokens, no upscaling), zoom track on a 0.4 crop; v1 GUI: ≤2,048 tokens (ScreenSpot-Pro native), zoom on a 0.25 crop.",
+  "§ GUI, both Glance columns: native resolution (≤8,192 visual tokens, no upscaling), zoom track on a 0.4 crop (≤4,096 tokens).",
   "† Reported elsewhere, with its own prompts and resolutions: Qwen3.5-4B model card; RC-GRPO (arXiv 2608.04698) for Qwen3-VL-4B gRefCOCO/GREC; VenusBench-GD",
   "   (2512.16501) Table 5; UI-Venus-1.5 (2602.09082) Table 1 for Qwen3-VL-8B ScreenSpot-v2; Glance-X-4B (joint direction).   ‡ 500-expression random sample.",
   "Cell-by-cell sources: docs/benchmark_sources.md in github.com/Vision-Decision/Glance"

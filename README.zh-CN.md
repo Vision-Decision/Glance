@@ -20,8 +20,10 @@ from glance import Glance
 
 m = Glance.from_pretrained("Vision-Decision/Glance-4B-preview")   # 依次尝试 cuda、mps、cpu
 r = m.box("assets/examples/park_bench.jpg", "the clear umbrella")
-print(r.present_prob, r.box, r.confidence)                 # 0.996 (189.2, 9.3, 373.6, 164.8) 0.8233
+print(r.present_prob, r.box, r.confidence)                 # 0.995 (191, 5, 372, 166) 0.915
 ```
+
+当前权重是 **Glance 2.0**：在 Qwen3.5-4B 基座上从头训 3,000 步（v1.4 数据）。原来的预览版 v1 保留在同一仓库的 tag `v1` 下，用 `Glance.from_pretrained("Vision-Decision/Glance-4B-preview", revision="v1")` 加载。
 
 首次调用会下载 Qwen3.5-4B 基座权重（约 9 GB）以及 Glance 的 adapter 和 heads（约 537 MB）。
 
@@ -41,9 +43,9 @@ from glance import Glance, Choice, YesNo, Score
 
 m = Glance.from_pretrained("Vision-Decision/Glance-4B-preview")
 m.box("assets/examples/park_bench.jpg", "a red bicycle")          # 图中没有
-# BoxResult('a red bicycle', present_prob=0.000, box=[5, 171, 236, 363], confidence=0.000)
+# BoxResult('a red bicycle', present_prob=0.000, box=[465, 213, 583, 265], confidence=0.000)
 m.yesno("assets/examples/editor.png", "Is a save dialog open?")
-# YesNoResult(p_yes=0.992)
+# YesNoResult(p_yes=0.998)
 
 # 一次共享前缀前向回答多个问题；纯字符串表示 box 问题
 rs = m.ask("assets/examples/vegetables.jpg", [
@@ -60,13 +62,13 @@ rs = m.ask("assets/examples/vegetables.jpg", [
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/benchmark-table-dark.svg">
-  <img width="100%" alt="基准对比表：Glance-4B-preview 与 Qwen3.5-4B、Qwen3-VL-4B、Qwen3-VL-8B、Glance-X-4B 对比" src="assets/benchmark-table-light.svg">
+  <img width="100%" alt="基准对比表：Glance 2.0 与 Glance v1、Qwen3.5-4B、Qwen3-VL-4B、Qwen3-VL-8B、Glance-X-4B 对比" src="assets/benchmark-table-light.svg">
 </picture>
 
-Glance-4B-preview 在"目标不存在"的拒答和速度上领先，指代定位也超过生成式基座。Glance-X-4B 在多数 RefCOCO 子集和存在判断 AUROC 上领先，Qwen3-VL-4B 在官方 GREC 指标上领先，基座和 Qwen3-VL 在 GUI 定位上领先。蓝色格表示 Glance 最好，灰色格表示其他模型最好。数据来源、评测协议和脚注见 [英文 README](README.md#benchmarks)。
+Glance 2.0 在 RefCOCO 全部 8 个 split 上都高于 v1（平均 91.8 对 90.8）。拒答目标不存在的能力和 v1 持平：召回 95% 时的拒答 FPR 为 9.0 对 8.5（差 +0.49，95% CI [-0.15, +1.25]），官方 GREC val 都是 71.6；但在默认 0.5 阈值下 2.0 拒得少一些（gRefCOCO val 无目标题 85.1% 对 87.4%），依赖拒答时请按自己的召回目标设 `present_prob` 阈值。GUI 定位上两者都按原图分辨率评测：ScreenSpot-v2 91.0 对 88.4，ScreenSpot-Pro 50.0 对 39.2（zoom 两段式 63.9 对 57.0），VenusBench-GD 总分 59.5 对 56.5。和其他模型比，Glance-X-4B 在存在判断 AUROC 上领先，Qwen3-VL-4B 在官方 GREC 指标上领先，生成式基座和 Qwen3-VL 在 ScreenSpot 上领先。蓝色格表示 Glance 2.0 最好，灰色格表示其他模型最好。数据来源、评测协议和脚注见 [英文 README](README.md#benchmarks)。
 
 ## 许可
 
 - 本仓库代码：Apache-2.0。
-- 权重（`Vision-Decision/Glance-4B-preview`）：**CC BY-NC 4.0，仅限非商业用途**。训练数据包含仅限非商用的 gRefCOCO，以及部分许可无法确认的文本数据源。
+- 权重（`Vision-Decision/Glance-4B-preview`，主分支为 Glance 2.0，tag `v1` 为原预览版）：**CC BY-NC 4.0，仅限非商业用途**。训练数据包含仅限非商用的 gRefCOCO，以及部分许可无法确认的文本数据源。
 - 基座模型 Qwen/Qwen3.5-4B：Apache-2.0。
